@@ -1,0 +1,49 @@
+# Claude Code local settings (machine-specific, not shared)
+.claude/settings.local.json
+.claude/launch.json
+
+# Flutter/Dart
+**/.dart_tool/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/.packages
+**/build/
+**/.pub-cache/
+**/.pub/
+app/pubspec.lock
+
+# Android
+**/android/.gradle/
+**/android/local.properties
+**/android/key.properties
+**/android/app/*.jks
+**/android/app/*.keystore
+
+# iOS
+**/ios/Pods/
+**/ios/.symlinks/
+**/ios/Flutter/Flutter.framework
+**/ios/Flutter/Flutter.podspec
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Secrets / env files (scraper credentials, service keys — never commit)
+*.env
+.env.*
+scraper/.env
+scraper/**/secrets.*
+scraper/*.jsonl
+scraper/*.html
+scraper/match_report.txt
+scraper/__pycache__/
+**/__pycache__/
+app/env/dev.json
+app/env/*.json
+!app/env/dev.example.json
+
+# OS
+.DS_Store
+Thumbs.db

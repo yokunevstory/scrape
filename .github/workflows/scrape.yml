@@ -1,0 +1,46 @@
+name: Scrape prices
+
+# Регулярный скрапинг Rimi + Barbora и запись в Supabase — чтобы цены в
+# приложении обновлялись сами по себе, без ручного запуска скрапера и без
+# новой сборки/установки APK (приложение и так читает Supabase по сети).
+# См. SPEC.md §16 и SETUP.md §5.
+
+on:
+  schedule:
+    - cron: '0 4 * * *' # ежедневно в 04:00 UTC (06:00/07:00 по Риге)
+  workflow_dispatch: {} # + кнопка "Run workflow" для запуска вручную
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Установить зависимости
+        run: pip install -r scraper/requirements.txt
+
+      - name: Записать ключи Supabase (из GitHub Secrets, не в git)
+        run: |
+          cat > scraper/.env <<EOF
+          SUPABASE_APP_URL=${{ secrets.SUPABASE_APP_URL }}
+          SUPABASE_APP_SERVICE_KEY=${{ secrets.SUPABASE_APP_SERVICE_KEY }}
+          SUPABASE_ARCHIVE_URL=${{ secrets.SUPABASE_ARCHIVE_URL }}
+          SUPABASE_ARCHIVE_SERVICE_KEY=${{ secrets.SUPABASE_ARCHIVE_SERVICE_KEY }}
+          EOF
+
+      - name: Скрапинг Rimi (все рубрики)
+        working-directory: scraper
+        run: python run_to_supabase.py --store rimi --all-categories
+
+      - name: Скрапинг Barbora (все рубрики)
+        working-directory: scraper
+        run: python run_to_supabase.py --store barbora --all-categories
+
+      - name: Сопоставление товаров между магазинами
+        working-directory: scraper
+        run: python match_products.py --threshold 0.70
