@@ -130,18 +130,32 @@ def compute_size(item: dict) -> float | None:
 
 
 def fetch_all_store_products(cfg: SupabaseConfig) -> list[dict]:
-    resp = requests.get(
-        f"{cfg.app_url}/rest/v1/store_products",
-        params={
-            "select": "id,raw_name,raw_category_path,package_price,"
-                      "unit_price,unit_type,brand,product_id,stores(slug)",
-            "limit": "5000",
-        },
-        headers=_headers(cfg.app_service_key),
-        timeout=60,
-    )
-    resp.raise_for_status()
-    rows = resp.json()
+    """Постранично тянет ВСЕ строки (раньше был жёсткий limit=5000 — при
+    полном скрапинге всех рубрик, а не небольшой выборки, это перестало
+    покрывать таблицу целиком и давало 0 совпадений: в первые 5000 строк
+    попадали в основном товары одного магазина)."""
+    page_size = 1000
+    rows: list[dict] = []
+    offset = 0
+    while True:
+        resp = requests.get(
+            f"{cfg.app_url}/rest/v1/store_products",
+            params={
+                "select": "id,raw_name,raw_category_path,package_price,"
+                          "unit_price,unit_type,brand,product_id,stores(slug)",
+                "limit": str(page_size),
+                "offset": str(offset),
+                "order": "id",
+            },
+            headers=_headers(cfg.app_service_key),
+            timeout=60,
+        )
+        resp.raise_for_status()
+        page = resp.json()
+        rows.extend(page)
+        if len(page) < page_size:
+            break
+        offset += page_size
     for r in rows:
         r["store_slug"] = (r.get("stores") or {}).get("slug")
     return rows

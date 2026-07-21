@@ -11,7 +11,7 @@ class CategoryProductsScreen extends StatelessWidget {
   });
 
   final String title;
-  final List<String> matchPatterns;
+  final List<List<String>> matchPatterns;
 
   @override
   Widget build(BuildContext context) {

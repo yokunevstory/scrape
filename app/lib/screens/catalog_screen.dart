@@ -81,7 +81,7 @@ class _CategoryCard extends StatelessWidget {
             builder: (_) => category.subcategories.isEmpty
                 ? CategoryProductsScreen(
                     title: category.displayName,
-                    matchPatterns: [category.matchPattern],
+                    matchPatterns: [category.patternGroup],
                   )
                 : SubcategoryListScreen(category: category),
           ),

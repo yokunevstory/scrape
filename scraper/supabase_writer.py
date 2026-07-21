@@ -9,11 +9,38 @@
 from __future__ import annotations
 
 import datetime as dt
+import time
 from dataclasses import dataclass
 
 import requests
 
 from rimi_scraper import ScrapedProduct
+
+# При долгих прогонах (сотни категорий подряд) Supabase иногда отвечает
+# временной 500/сетевой ошибкой без видимой причины в данных (проверено
+# вручную — повтор того же запроса сразу после успешен). Повтор с паузой
+# вместо падения всего скрапинга на одной категории.
+_MAX_RETRIES = 5
+_RETRY_DELAY_SECONDS = 8
+
+
+def _request_with_retry(method: str, url: str, **kwargs) -> requests.Response:
+    last_error: Exception | None = None
+    for attempt in range(_MAX_RETRIES):
+        try:
+            resp = requests.request(method, url, **kwargs)
+            if resp.status_code >= 500:
+                last_error = requests.exceptions.HTTPError(
+                    f"{resp.status_code} Server Error", response=resp
+                )
+            else:
+                return resp
+        except (requests.exceptions.ConnectionError, requests.exceptions.SSLError,
+                requests.exceptions.Timeout) as exc:
+            last_error = exc
+        if attempt < _MAX_RETRIES - 1:
+            time.sleep(_RETRY_DELAY_SECONDS * (attempt + 1))
+    raise last_error
 
 
 @dataclass
@@ -55,8 +82,8 @@ def _headers(service_key: str, prefer: str | None = None) -> dict:
 def get_or_create_store(cfg: SupabaseConfig, slug: str, display_name: str) -> str:
     """Возвращает id строки stores по slug, создавая её при первом запуске."""
     base = f"{cfg.app_url}/rest/v1/stores"
-    resp = requests.get(
-        base, params={"slug": f"eq.{slug}", "select": "id"},
+    resp = _request_with_retry(
+        "get", base, params={"slug": f"eq.{slug}", "select": "id"},
         headers=_headers(cfg.app_service_key), timeout=20,
     )
     resp.raise_for_status()
@@ -64,8 +91,8 @@ def get_or_create_store(cfg: SupabaseConfig, slug: str, display_name: str) -> st
     if rows:
         return rows[0]["id"]
 
-    resp = requests.post(
-        base,
+    resp = _request_with_retry(
+        "post", base,
         json={"slug": slug, "display_name": display_name},
         headers=_headers(cfg.app_service_key, prefer="return=representation"),
         timeout=20,
@@ -99,8 +126,8 @@ def upsert_store_products(cfg: SupabaseConfig, store_id: str,
         for p in products
     ]
 
-    resp = requests.post(
-        f"{cfg.app_url}/rest/v1/store_products",
+    resp = _request_with_retry(
+        "post", f"{cfg.app_url}/rest/v1/store_products",
         params={"on_conflict": "store_id,store_sku"},
         json=rows,
         headers=_headers(
@@ -125,8 +152,8 @@ def insert_price_history(cfg: SupabaseConfig, store_product_ids: dict[str, str],
     ]
     if not rows:
         return
-    resp = requests.post(
-        f"{cfg.app_url}/rest/v1/price_history",
+    resp = _request_with_retry(
+        "post", f"{cfg.app_url}/rest/v1/price_history",
         json=rows,
         headers=_headers(cfg.app_service_key, prefer="return=minimal"),
         timeout=60,
@@ -151,8 +178,8 @@ def insert_promotions(cfg: SupabaseConfig, store_product_ids: dict[str, str],
     ]
     if not rows:
         return
-    resp = requests.post(
-        f"{cfg.app_url}/rest/v1/promotions",
+    resp = _request_with_retry(
+        "post", f"{cfg.app_url}/rest/v1/promotions",
         json=rows,
         headers=_headers(cfg.app_service_key, prefer="return=minimal"),
         timeout=60,
@@ -167,8 +194,8 @@ def record_price_observations(cfg: SupabaseConfig, products: list[ScrapedProduct
     now = dt.datetime.now(dt.timezone.utc).isoformat()
 
     for p in products:
-        resp = requests.get(
-            base,
+        resp = _request_with_retry(
+            "get", base,
             params={
                 "store_slug": f"eq.{p.store_slug}",
                 "raw_product_key": f"eq.{p.store_sku}",
@@ -186,16 +213,16 @@ def record_price_observations(cfg: SupabaseConfig, products: list[ScrapedProduct
             continue  # цена не изменилась — новую запись не создаём
 
         if current:
-            requests.patch(
-                base,
+            _request_with_retry(
+                "patch", base,
                 params={"id": f"eq.{current[0]['id']}"},
                 json={"valid_to": now},
                 headers=_headers(cfg.archive_service_key, prefer="return=minimal"),
                 timeout=20,
             ).raise_for_status()
 
-        requests.post(
-            base,
+        _request_with_retry(
+            "post", base,
             json={
                 "store_slug": p.store_slug,
                 "raw_product_key": p.store_sku,

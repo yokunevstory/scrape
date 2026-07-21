@@ -38,6 +38,7 @@ scraper/**/secrets.*
 scraper/*.jsonl
 scraper/*.html
 scraper/match_report.txt
+scraper/failed_categories_*.txt
 scraper/__pycache__/
 **/__pycache__/
 app/env/dev.json

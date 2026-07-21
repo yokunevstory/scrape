@@ -27,8 +27,8 @@ class SubcategoryListScreen extends StatelessWidget {
                   builder: (_) => CategoryProductsScreen(
                     title: sub.displayName,
                     matchPatterns: sub.useTopFilter
-                        ? [category.matchPattern, sub.matchPattern]
-                        : [sub.matchPattern],
+                        ? [category.patternGroup, sub.patternGroup]
+                        : [sub.patternGroup],
                   ),
                 ),
               ),

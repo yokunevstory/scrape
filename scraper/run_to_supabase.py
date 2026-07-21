@@ -71,15 +71,30 @@ def main():
         return
 
     total = 0
+    failed_urls: list[str] = []
     for i, url in enumerate(urls, 1):
         print(f"[{i}/{len(urls)}] {url}")
-        products = store["scrape_category"](session, url, category_index)
-        write_products(cfg, store["slug"], store["display_name"], products)
+        try:
+            products = store["scrape_category"](session, url, category_index)
+            write_products(cfg, store["slug"], store["display_name"], products)
+        except Exception as exc:
+            # Одна упавшая категория (например, временная 500 от Supabase,
+            # см. supabase_writer._request_with_retry) не должна обрывать
+            # многочасовой прогон по всем рубрикам — логируем и идём дальше,
+            # неудачные адреса можно повторить отдельным прогоном.
+            print(f"  ОШИБКА, пропускаю категорию: {exc}")
+            failed_urls.append(url)
+            continue
         total += len(products)
         print(f"  записано товаров: {len(products)}")
         time.sleep(1.0)
 
     print(f"\nВсего записано в Supabase: {total}")
+    if failed_urls:
+        report_path = f"failed_categories_{args.store}.txt"
+        with open(report_path, "w", encoding="utf-8") as f:
+            f.write("\n".join(failed_urls))
+        print(f"Не удалось обработать {len(failed_urls)} категорий — см. {report_path}")
 
 
 if __name__ == "__main__":

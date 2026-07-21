@@ -13,15 +13,22 @@ class ProductRepository {
       'unit_price, unit_type, is_promo, image_url, source_url, '
       'stores(display_name, slug)';
 
-  /// [matchPatterns] комбинируются через И (все подстроки должны
-  /// встретиться в пути категории) — так подкатегория может фильтровать и
-  /// по своему паттерну, и по паттерну родительской категории одновременно,
-  /// что нужно, когда общее слово (например, "dzērieni") само по себе
-  /// слишком общее, а в сочетании с родительским паттерном — уже точное.
-  Future<List<StoreProductRow>> fetchByCategory(List<String> matchPatterns) async {
+  /// [patternGroups] комбинируются через И между группами (все группы должны
+  /// совпасть) — так подкатегория может фильтровать и по своему паттерну, и
+  /// по паттерну родительской категории одновременно, что нужно, когда общее
+  /// слово (например, "dzērieni") само по себе слишком общее, а в сочетании
+  /// с родительским паттерном — уже точное. Внутри группы паттерны
+  /// комбинируются через ИЛИ — нужно, когда Rimi и Barbora называют один и
+  /// тот же раздел по-разному (см. TopCategory/SubCategory.patternGroup).
+  Future<List<StoreProductRow>> fetchByCategory(List<List<String>> patternGroups) async {
     var query = _client.from('store_products').select(_selectWithStore);
-    for (final pattern in matchPatterns) {
-      query = query.ilike('raw_category_path', '%$pattern%');
+    for (final group in patternGroups) {
+      if (group.length == 1) {
+        query = query.ilike('raw_category_path', '%${group.first}%');
+      } else {
+        final orFilter = group.map((p) => 'raw_category_path.ilike.%$p%').join(',');
+        query = query.or(orFilter);
+      }
     }
     final rows = await query.order('unit_price', ascending: true).limit(200);
     return (rows as List)
