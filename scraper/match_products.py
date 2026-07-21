@@ -89,6 +89,34 @@ def carbonation_conflicts(name_a: str, name_b: str) -> bool:
     return (a_gas and b_no_gas) or (a_no_gas and b_gas)
 
 
+_PROTEIN_GROUPS: list[set[str]] = [
+    {"cūkgaļa", "cūkgaļas", "cūkas", "cūka"},
+    {"liellopa", "liellopu", "liellops", "teļa", "teļš"},
+    {"vistas", "vista"},
+    {"tītara", "tītars"},
+    {"pīles", "pīle"},
+    {"lasis", "laša", "lašu"},
+    {"siļķe", "siļķes"},
+    {"tuncis", "tunča"},
+]
+
+
+def protein_conflicts(name_a: str, name_b: str) -> bool:
+    """Разные виды мяса/рыбы с похожей общей частью названия ("... fileja
+    kg") иначе выглядят как один товар — нашли на реальных данных: лосось
+    ("Atlantijas laša fileja kg") сматчился с говядиной ("Liellopa fileja
+    kg") только по общим словам "fileja kg", ratio 0.75. Если у обеих
+    сторон есть явный признак вида мяса/рыбы и они из разных групп —
+    считаем конфликтом, даже если остальной текст совпадает."""
+    words_a = set(re.findall(r"\w+", name_a.lower()))
+    words_b = set(re.findall(r"\w+", name_b.lower()))
+    groups_a = {i for i, g in enumerate(_PROTEIN_GROUPS) if g & words_a}
+    groups_b = {i for i, g in enumerate(_PROTEIN_GROUPS) if g & words_b}
+    if not groups_a or not groups_b:
+        return False
+    return groups_a.isdisjoint(groups_b)
+
+
 _PERCENT_RE = re.compile(r"(\d+[.,]?\d*)\s*%")
 
 
@@ -161,14 +189,22 @@ def fetch_all_store_products(cfg: SupabaseConfig) -> list[dict]:
     return rows
 
 
+_PRODUCTS_UNIT_TYPE_MAP = {"gab": "pcs", "kg": "kg", "l": "l"}
+
+
 def create_canonical_product(cfg: SupabaseConfig, name: str, brand: str | None,
                               unit_type: str | None, unit_size: float | None) -> str:
+    # products.unit_type ограничена check-констрейнтом ('kg','l','pcs'), а
+    # store_products использует латышское сокращение 'gab' (штука) — без
+    # перевода вставка падала с 400 для любого поштучного товара (много
+    # мяса/готовых блюд после полного скрапинга — раньше не всплывало,
+    # т.к. сматченные товары были почти только молочные, kg/l).
     resp = requests.post(
         f"{cfg.app_url}/rest/v1/products",
         json={
             "canonical_name": name,
             "brand": brand,
-            "unit_type": unit_type or "gab",
+            "unit_type": _PRODUCTS_UNIT_TYPE_MAP.get(unit_type, "pcs"),
             "unit_size": unit_size,
         },
         headers=_headers(cfg.app_service_key, prefer="return=representation"),
@@ -234,6 +270,8 @@ def main():
                 continue
             if fat_percent_conflicts(a["raw_name"], b["raw_name"]):
                 continue
+            if protein_conflicts(a["raw_name"], b["raw_name"]):
+                continue
             size_b = compute_size(b)
             if size_a and size_b:
                 diff = abs(size_a - size_b) / max(size_a, size_b)
@@ -267,15 +305,25 @@ def main():
         print(f"Dry run: {len(matches)} matches, see match_report.txt")
         return
 
+    committed = 0
+    failed = 0
     for category, a, b, ratio in matches:
-        unit_type = a.get("unit_type") or b.get("unit_type")
-        size = compute_size(a) or compute_size(b)
-        brand = a.get("brand") or b.get("brand") or guess_brand(a["raw_name"]) or guess_brand(b["raw_name"])
-        product_id = create_canonical_product(cfg, a["raw_name"], brand, unit_type, size)
-        link_store_product(cfg, a["id"], product_id)
-        link_store_product(cfg, b["id"], product_id)
+        try:
+            unit_type = a.get("unit_type") or b.get("unit_type")
+            size = compute_size(a) or compute_size(b)
+            brand = (a.get("brand") or b.get("brand")
+                     or guess_brand(a["raw_name"]) or guess_brand(b["raw_name"]))
+            product_id = create_canonical_product(cfg, a["raw_name"], brand, unit_type, size)
+            link_store_product(cfg, a["id"], product_id)
+            link_store_product(cfg, b["id"], product_id)
+            committed += 1
+        except Exception as exc:
+            # Одна проблемная пара (например, неожиданное значение unit_type)
+            # не должна обрывать запись остальных сотен совпадений.
+            print(f"  пропущено ({a['raw_name']!r} / {b['raw_name']!r}): {exc}")
+            failed += 1
 
-    print(f"Готово: {len(matches)} совпадений записано. Отчёт — match_report.txt")
+    print(f"Записано: {committed}, пропущено: {failed}. Отчёт — match_report.txt")
 
 
 if __name__ == "__main__":
