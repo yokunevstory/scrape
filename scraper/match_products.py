@@ -22,7 +22,7 @@ import re
 
 import requests
 
-from supabase_writer import SupabaseConfig, _headers
+from supabase_writer import SupabaseConfig, _headers, _request_with_retry
 
 _SIZE_TOKEN_RE = re.compile(
     r"\b\d+[.,]?\d*\s*(kg|g|ml|l|gab\.?|proc\.?|%)\b", re.IGNORECASE
@@ -133,12 +133,6 @@ def fat_percent_conflicts(name_a: str, name_b: str) -> bool:
     return pcts_a.isdisjoint(pcts_b)
 
 
-def top_category(path: str | None) -> str | None:
-    if not path:
-        return None
-    return path.split("/")[0].strip()
-
-
 def brands_conflict(brand_a: str | None, brand_b: str | None) -> bool:
     """True, если у ОБЕИХ сторон указан бренд и они явно разные — тогда это
     не один и тот же товар, независимо от похожести названия (см. обсуждение
@@ -157,6 +151,75 @@ def compute_size(item: dict) -> float | None:
     return item["package_price"] / unit_price
 
 
+def has_conflict(a: dict, b: dict, size_tolerance: float) -> bool:
+    """True — пара точно НЕ один и тот же товар (конфликт бренда/газации/
+    жирности/вида мяса-рыбы или размера упаковки), независимо от похожести
+    названий. Отдельно от расчёта похожести — раньше конфликт и "просто
+    непохоже" оба возвращали 0.0 одной функцией, из-за чего сравнение
+    товара сразу с НЕСКОЛЬКИМИ представителями группы (см. main(), Фаза A)
+    могло взять похожесть с представителем, который просто не упомянул
+    жирность в названии, и пропустить реальный конфликт с другим
+    представителем той же группы, где жирность указана."""
+    brand_a = a.get("brand") or guess_brand(a["raw_name"])
+    brand_b = b.get("brand") or guess_brand(b["raw_name"])
+    if brands_conflict(brand_a, brand_b):
+        return True
+    if carbonation_conflicts(a["raw_name"], b["raw_name"]):
+        return True
+    if fat_percent_conflicts(a["raw_name"], b["raw_name"]):
+        return True
+    if protein_conflicts(a["raw_name"], b["raw_name"]):
+        return True
+    size_a, size_b = compute_size(a), compute_size(b)
+    if size_a and size_b:
+        diff = abs(size_a - size_b) / max(size_a, size_b)
+        if diff > size_tolerance:
+            return True
+    return False
+
+
+def name_similarity(a: dict, b: dict) -> float:
+    """Похожесть названий (0..1) БЕЗ проверки конфликтов — вызывать только
+    после has_conflict() == False. Убираем бренд из названий перед
+    сравнением — иначе одинаковый бренд + разный вкус ("Kārums ar
+    magonēm" vs "KĀRUMS vaniļas") может набрать высокую похожесть только
+    за счёт общих слов бренда и категории, а не вкуса."""
+    brand_a = a.get("brand") or guess_brand(a["raw_name"])
+    brand_b = b.get("brand") or guess_brand(b["raw_name"])
+    strip_words = _FILLER_WORDS | {w.lower() for w in (brand_a, brand_b) if w}
+    name_a = normalize_name(a["raw_name"], strip_words)
+    name_b = normalize_name(b["raw_name"], strip_words)
+    return difflib.SequenceMatcher(None, name_a, name_b).ratio()
+
+
+def match_ratio(a: dict, b: dict, size_tolerance: float) -> float:
+    """0.0 при конфликте, иначе — похожесть названий (0..1). Общая проверка
+    для сравнения любых двух товаров из РАЗНЫХ магазинов."""
+    if has_conflict(a, b, size_tolerance):
+        return 0.0
+    return name_similarity(a, b)
+
+
+class UnionFind:
+    """Для сопоставления сразу N магазинов: если A (Rimi) похож на B
+    (Barbora), а B похож на C (LaTS), все трое должны стать ОДНИМ
+    каноническим товаром, а не двумя отдельными парами."""
+
+    def __init__(self, ids):
+        self._parent = {i: i for i in ids}
+
+    def find(self, x):
+        while self._parent[x] != x:
+            self._parent[x] = self._parent[self._parent[x]]
+            x = self._parent[x]
+        return x
+
+    def union(self, a, b):
+        ra, rb = self.find(a), self.find(b)
+        if ra != rb:
+            self._parent[ra] = rb
+
+
 def fetch_all_store_products(cfg: SupabaseConfig) -> list[dict]:
     """Постранично тянет ВСЕ строки (раньше был жёсткий limit=5000 — при
     полном скрапинге всех рубрик, а не небольшой выборки, это перестало
@@ -166,8 +229,8 @@ def fetch_all_store_products(cfg: SupabaseConfig) -> list[dict]:
     rows: list[dict] = []
     offset = 0
     while True:
-        resp = requests.get(
-            f"{cfg.app_url}/rest/v1/store_products",
+        resp = _request_with_retry(
+            "get", f"{cfg.app_url}/rest/v1/store_products",
             params={
                 "select": "id,raw_name,raw_category_path,package_price,"
                           "unit_price,unit_type,brand,product_id,stores(slug)",
@@ -199,8 +262,8 @@ def create_canonical_product(cfg: SupabaseConfig, name: str, brand: str | None,
     # перевода вставка падала с 400 для любого поштучного товара (много
     # мяса/готовых блюд после полного скрапинга — раньше не всплывало,
     # т.к. сматченные товары были почти только молочные, kg/l).
-    resp = requests.post(
-        f"{cfg.app_url}/rest/v1/products",
+    resp = _request_with_retry(
+        "post", f"{cfg.app_url}/rest/v1/products",
         json={
             "canonical_name": name,
             "brand": brand,
@@ -215,14 +278,60 @@ def create_canonical_product(cfg: SupabaseConfig, name: str, brand: str | None,
 
 
 def link_store_product(cfg: SupabaseConfig, store_product_id: str, product_id: str) -> None:
-    resp = requests.patch(
-        f"{cfg.app_url}/rest/v1/store_products",
+    resp = _request_with_retry(
+        "patch", f"{cfg.app_url}/rest/v1/store_products",
         params={"id": f"eq.{store_product_id}"},
         json={"product_id": product_id},
         headers=_headers(cfg.app_service_key, prefer="return=minimal"),
         timeout=20,
     )
     resp.raise_for_status()
+
+
+def greedy_match_pairs(items_a: list[dict], items_b: list[dict],
+                       threshold: float, size_tolerance: float) -> list[tuple[dict, dict, float]]:
+    """Для каждого товара из items_a ищем самый похожий ЕЩЁ НЕ занятый товар
+    из items_b (жадно, один-к-одному) — та же логика, что раньше была
+    единственной парой Rimi/Barbora, теперь переиспользуется для любой пары
+    магазинов (Rimi/Barbora, Rimi/LaTS, Barbora/LaTS)."""
+    used_b_ids: set[str] = set()
+    pairs = []
+    for a in items_a:
+        best, best_ratio = None, 0.0
+        for b in items_b:
+            if b["id"] in used_b_ids:
+                continue
+            ratio = match_ratio(a, b, size_tolerance)
+            if ratio > best_ratio:
+                best_ratio, best = ratio, b
+        if best and best_ratio >= threshold:
+            used_b_ids.add(best["id"])
+            pairs.append((a, best, best_ratio))
+    return pairs
+
+
+def _pick(items: list[dict], key: str):
+    for item in items:
+        value = item.get(key)
+        if value:
+            return value
+    return None
+
+
+def _pick_brand(items: list[dict]) -> str | None:
+    for item in items:
+        brand = item.get("brand") or guess_brand(item["raw_name"])
+        if brand:
+            return brand
+    return None
+
+
+def _pick_size(items: list[dict]) -> float | None:
+    for item in items:
+        size = compute_size(item)
+        if size:
+            return size
+    return None
 
 
 def main():
@@ -238,89 +347,136 @@ def main():
 
     cfg = SupabaseConfig.from_env_file(args.env_file)
     rows = fetch_all_store_products(cfg)
+
+    matched_rows = [r for r in rows if r.get("product_id")]
     unmatched = [r for r in rows if not r.get("product_id")]
 
-    # Раньше сравнивали только внутри одной верхнеуровневой категории (по
-    # точному тексту raw_category_path), чтобы не сверять вообще всё со
-    # всем. Но у Rimi и Barbora названия категорий отличаются даже для одних
-    # и тех же товаров (напр. "Gaļa, zivs un gatavā kulinārija" у Barbora
-    # против "Gaļa, zivis un gatavā kulinārija" у Rimi, "Maize un
-    # konditoreja" против "Maize un konditorejas izstrādājumi") — из-за
-    # этого мясо, хлеб и детские товары вообще никогда не сравнивались
-    # между магазинами. Сравниваем все несопоставленные товары сразу;
-    # от ложных совпадений защищают бренд/размер/жирность/газация-гейты
-    # и высокий порог похожести названия, а не совпадение категории.
-    rimi_items = [r for r in unmatched if r["store_slug"] == "rimi"]
-    barbora_items = [r for r in unmatched if r["store_slug"] == "barbora"]
-    used_barbora_ids = set()
+    existing_groups: dict[str, list[dict]] = {}
+    for r in matched_rows:
+        existing_groups.setdefault(r["product_id"], []).append(r)
 
-    matches = []
-    for a in rimi_items:
-        size_a = compute_size(a)
-        brand_a = a.get("brand") or guess_brand(a["raw_name"])
-        best, best_ratio = None, 0.0
-
-        for b in barbora_items:
-            if b["id"] in used_barbora_ids:
+    # --- Фаза A: сначала пробуем приложить несопоставленные товары к УЖЕ
+    # существующим сматченным группам (например Rimi+Barbora уже сматчены
+    # раньше — добавляем сюда такой же товар из LaTS), а не плодить новую
+    # отдельную пару для третьего магазина.
+    attach_plan: list[tuple[dict, str, float]] = []
+    attached_ids: set[str] = set()
+    for item in unmatched:
+        best_product_id, best_ratio = None, 0.0
+        for product_id, members in existing_groups.items():
+            if any(m["store_slug"] == item["store_slug"] for m in members):
+                continue  # этот магазин уже представлен в группе
+            # Конфликт хотя бы с ОДНИМ участником группы — вето на всю
+            # группу целиком, а не просто "не считаем этого участника":
+            # иначе похожесть с представителем, который не упомянул,
+            # например, жирность в названии, могла бы перекрыть реальный
+            # конфликт с другим представителем той же группы.
+            if any(has_conflict(item, m, args.size_tolerance) for m in members):
                 continue
-            brand_b = b.get("brand") or guess_brand(b["raw_name"])
-            if brands_conflict(brand_a, brand_b):
-                continue
-            if carbonation_conflicts(a["raw_name"], b["raw_name"]):
-                continue
-            if fat_percent_conflicts(a["raw_name"], b["raw_name"]):
-                continue
-            if protein_conflicts(a["raw_name"], b["raw_name"]):
-                continue
-            size_b = compute_size(b)
-            if size_a and size_b:
-                diff = abs(size_a - size_b) / max(size_a, size_b)
-                if diff > args.size_tolerance:
-                    continue
-            # Убираем бренд из названий перед сравнением похожести —
-            # иначе одинаковый бренд + разный вкус ("Kārums ar magonēm"
-            # vs "KĀRUMS vaniļas") может набрать высокую похожесть только
-            # за счёт общих слов бренда и категории, а не вкуса.
-            strip_words = _FILLER_WORDS | {w.lower() for w in (brand_a, brand_b) if w}
-            name_a = normalize_name(a["raw_name"], strip_words)
-            name_b = normalize_name(b["raw_name"], strip_words)
-            ratio = difflib.SequenceMatcher(None, name_a, name_b).ratio()
+            ratio = max(name_similarity(item, m) for m in members)
             if ratio > best_ratio:
-                best_ratio, best = ratio, b
+                best_ratio, best_product_id = ratio, product_id
+        if best_product_id and best_ratio >= args.threshold:
+            attach_plan.append((item, best_product_id, best_ratio))
+            attached_ids.add(item["id"])
 
-        if best and best_ratio >= args.threshold:
-            used_barbora_ids.add(best["id"])
-            matches.append((top_category(a["raw_category_path"]), a, best, best_ratio))
+    remaining = [r for r in unmatched if r["id"] not in attached_ids]
+
+    # --- Фаза B: среди оставшихся ищем новые совпадения парами магазинов
+    # (жадно, как раньше), затем через Union-Find объединяем пары в группы —
+    # так товар, сматченный и с Rimi, и с Barbora, попадёт в одну общую
+    # группу из трёх, а не в две несвязанные пары.
+    by_store: dict[str, list[dict]] = {}
+    for r in remaining:
+        by_store.setdefault(r["store_slug"], []).append(r)
+    store_slugs = sorted(by_store)
+
+    uf = UnionFind(r["id"] for r in remaining)
+
+    for i, slug_a in enumerate(store_slugs):
+        for slug_b in store_slugs[i + 1:]:
+            for a, b, ratio in greedy_match_pairs(
+                by_store[slug_a], by_store[slug_b], args.threshold, args.size_tolerance
+            ):
+                uf.union(a["id"], b["id"])
+
+    groups: dict[str, list[dict]] = {}
+    for r in remaining:
+        groups.setdefault(uf.find(r["id"]), []).append(r)
+    candidate_groups = [g for g in groups.values() if len({m["store_slug"] for m in g}) >= 2]
+
+    # Union-Find объединяет транзитивно: если A совпал с B, а B — с C, все
+    # трое попадают в одну группу, даже если A и C напрямую никогда не
+    # сравнивались и на самом деле конфликтуют (напр. A и B похожи, у B и C
+    # тоже что-то общее, а у A и C — разная жирность). Перепроверяем ВСЕ
+    # пары внутри готовой группы и отбрасываем группу целиком при конфликте
+    # — реже, но правильнее, чем оставить сомнительное трёхстороннее
+    # совпадение.
+    new_groups = []
+    rejected_groups = []
+    for group in candidate_groups:
+        conflict_found = any(
+            has_conflict(group[i], group[j], args.size_tolerance)
+            for i in range(len(group))
+            for j in range(i + 1, len(group))
+        )
+        (rejected_groups if conflict_found else new_groups).append(group)
 
     with open("match_report.txt", "w", encoding="utf-8") as f:
-        f.write(f"Найдено совпадений: {len(matches)}\n\n")
-        for category, a, b, ratio in matches:
+        f.write(f"Присоединено к существующим товарам: {len(attach_plan)}\n")
+        f.write(f"Новых сопоставленных групп: {len(new_groups)}\n")
+        f.write(f"Отклонено групп (конфликт внутри после Union-Find): {len(rejected_groups)}\n\n")
+        for item, product_id, ratio in attach_plan:
+            existing_names = "; ".join(f"{m['store_slug']}: {m['raw_name']}"
+                                       for m in existing_groups[product_id])
             f.write(
-                f"[{ratio:.2f}] {category}\n"
-                f"  Rimi:    {a['raw_name']} ({a['package_price']} EUR)\n"
-                f"  Barbora: {b['raw_name']} ({b['package_price']} EUR)\n\n"
+                f"[{ratio:.2f}] + {item['store_slug']}: {item['raw_name']} "
+                f"({item['package_price']} EUR) -> [{existing_names}]\n"
             )
+        f.write("\n")
+        for group in new_groups:
+            f.write("Новая группа:\n")
+            for m in sorted(group, key=lambda x: x["store_slug"]):
+                f.write(f"  {m['store_slug']:8s} {m['raw_name']} ({m['package_price']} EUR)\n")
+            f.write("\n")
+        if rejected_groups:
+            f.write("--- Отклонённые группы (конфликт между непосредственно не сравненной парой) ---\n\n")
+            for group in rejected_groups:
+                f.write("Отклонена:\n")
+                for m in sorted(group, key=lambda x: x["store_slug"]):
+                    f.write(f"  {m['store_slug']:8s} {m['raw_name']} ({m['package_price']} EUR)\n")
+                f.write("\n")
 
     if args.dry_run:
-        print(f"Dry run: {len(matches)} matches, see match_report.txt")
+        print(f"Dry run: присоединено {len(attach_plan)}, новых групп {len(new_groups)} "
+              f"— см. match_report.txt")
         return
 
     committed = 0
     failed = 0
-    for category, a, b, ratio in matches:
+
+    for item, product_id, ratio in attach_plan:
         try:
-            unit_type = a.get("unit_type") or b.get("unit_type")
-            size = compute_size(a) or compute_size(b)
-            brand = (a.get("brand") or b.get("brand")
-                     or guess_brand(a["raw_name"]) or guess_brand(b["raw_name"]))
-            product_id = create_canonical_product(cfg, a["raw_name"], brand, unit_type, size)
-            link_store_product(cfg, a["id"], product_id)
-            link_store_product(cfg, b["id"], product_id)
+            link_store_product(cfg, item["id"], product_id)
             committed += 1
         except Exception as exc:
-            # Одна проблемная пара (например, неожиданное значение unit_type)
-            # не должна обрывать запись остальных сотен совпадений.
-            print(f"  пропущено ({a['raw_name']!r} / {b['raw_name']!r}): {exc}")
+            # Одна проблемная запись не должна обрывать остальные сотни.
+            print(f"  пропущено (attach {item['raw_name']!r}): {exc}")
+            failed += 1
+
+    for group in new_groups:
+        try:
+            brand = _pick_brand(group)
+            unit_type = _pick(group, "unit_type")
+            size = _pick_size(group)
+            name = group[0]["raw_name"]
+            product_id = create_canonical_product(cfg, name, brand, unit_type, size)
+            for m in group:
+                link_store_product(cfg, m["id"], product_id)
+            committed += 1
+        except Exception as exc:
+            names = "; ".join(m["raw_name"] for m in group)
+            print(f"  пропущено (новая группа {names}): {exc}")
             failed += 1
 
     print(f"Записано: {committed}, пропущено: {failed}. Отчёт — match_report.txt")

@@ -60,11 +60,16 @@ class ProductRepository {
   /// результат scraper/match_products.py (SPEC.md §8.2). Это гарантированное
   /// сопоставление (в отличие от приблизительного поиска по категориям),
   /// поэтому можно честно показывать разницу в цене как экономию.
+  ///
+  /// Показываем только те, где цена реально отличается между магазинами —
+  /// если все предложения стоят одинаково, сравнивать тут нечего, а в общем
+  /// списке (не только на этом экране) такие товары и так видны — см.
+  /// обсуждение: "на странице метчинга — только то, что различается".
   Future<List<MatchedProduct>> fetchMatchedProducts() async {
     final rows = await _client.from('products').select(_matchedProductsSelect);
     final products = (rows as List)
         .map((r) => MatchedProduct.fromMap(r as Map<String, dynamic>))
-        .where((p) => p.offers.length >= 2)
+        .where((p) => p.offers.length >= 2 && p.savings != null)
         .toList();
     products.sort((a, b) => a.canonicalName.compareTo(b.canonicalName));
     return products;
