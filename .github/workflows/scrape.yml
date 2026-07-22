@@ -41,6 +41,10 @@ jobs:
         working-directory: scraper
         run: python run_to_supabase.py --store barbora --all-categories
 
+      - name: Скрапинг LaTS (все рубрики)
+        working-directory: scraper
+        run: python run_to_supabase.py --store lats --all-categories
+
       - name: Сопоставление товаров между магазинами
         working-directory: scraper
         run: python match_products.py --threshold 0.70

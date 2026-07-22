@@ -1,10 +1,11 @@
 """
-Скрапинг (Rimi или Barbora) -> запись в Supabase (основная БД + архив).
-Универсальный раннер для обоих магазинов. См. SPEC.md §8, §9.1.
+Скрапинг (Rimi, Barbora или LaTS) -> запись в Supabase (основная БД + архив).
+Универсальный раннер для всех магазинов. См. SPEC.md §8, §9.1, §16.
 
 Использование:
     python run_to_supabase.py --store rimi --category-url "https://www.rimi.lv/e-veikals/lv/produkti/piena-produkti-un-olas/c/SH-11"
     python run_to_supabase.py --store barbora --category-url "https://barbora.lv/piena-produkti-un-olas/piens/pasterizets-piens"
+    python run_to_supabase.py --store lats --category-url "https://e-latts.lv/biezpiens.21.g"
     python run_to_supabase.py --store barbora --all-categories --limit-categories 5
 """
 
@@ -14,6 +15,7 @@ import argparse
 import time
 
 import barbora_scraper
+import lats_scraper
 import rimi_scraper
 from supabase_writer import SupabaseConfig, write_products
 
@@ -39,6 +41,15 @@ STORES = {
         "fetch_category_tree": barbora_scraper.fetch_category_tree,
         "iter_leaf_category_urls": barbora_scraper.iter_leaf_category_urls,
         "scrape_category": lambda session, url, category_index: barbora_scraper.scrape_category(session, url),
+        "needs_category_index": False,
+    },
+    "lats": {
+        "slug": "lats",
+        "display_name": "LaTS",
+        "session": lats_scraper._session,
+        "fetch_category_tree": lats_scraper.fetch_category_tree,
+        "iter_leaf_category_urls": lats_scraper.iter_leaf_category_urls,
+        "scrape_category": lambda session, url, category_index: lats_scraper.scrape_category(session, url),
         "needs_category_index": False,
     },
 }
