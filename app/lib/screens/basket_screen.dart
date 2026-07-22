@@ -300,8 +300,11 @@ class BasketScreenState extends State<BasketScreen> {
                         children: [
                           if (!_showSplit) ...[
                             Text(
-                              'Дешевле всего купить всё в '
-                              '${summary.storeDisplayName(best.key)}',
+                              summary.bestSingleStoreHasFullCoverage
+                                  ? 'Дешевле всего купить всё в '
+                                      '${summary.storeDisplayName(best.key)}'
+                                  : 'Дешевле всего (но не всё есть) в '
+                                      '${summary.storeDisplayName(best.key)}',
                               style: Theme.of(context).textTheme.titleMedium,
                             ),
                             const SizedBox(height: 2),

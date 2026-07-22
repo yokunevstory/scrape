@@ -222,10 +222,28 @@ class BasketSummary {
   final int splitStoreCount;
   final int totalItems;
 
-  /// Магазин с минимальной суммой (из тех, где нашлось хотя бы что-то).
+  /// Магазин с минимальной суммой СРЕДИ ТЕХ, где нашлись вообще ВСЕ позиции
+  /// списка — иначе низкая сумма магазина, где нашлось только 2 из 10
+  /// позиций, будет ошибочно выглядеть как "дешевле всего купить всё
+  /// здесь" (реальный баг: LaTS с 2 дешёвыми найденными товарами обгонял
+  /// магазин, где были все 10). Если ни один магазин не покрывает список
+  /// целиком — как раньше, берём просто минимальную сумму из того, что
+  /// нашлось (это уже не "купить всё", см. hasFullCoverage).
   MapEntry<String, double>? get bestSingleStore {
     if (totalsByStore.isEmpty) return null;
-    return totalsByStore.entries.reduce((a, b) => a.value <= b.value ? a : b);
+    final fullCoverage = totalsByStore.entries
+        .where((e) => foundCountByStore[e.key] == totalItems)
+        .toList();
+    final candidates = fullCoverage.isNotEmpty ? fullCoverage : totalsByStore.entries.toList();
+    return candidates.reduce((a, b) => a.value <= b.value ? a : b);
+  }
+
+  /// true, если bestSingleStore реально покрывает весь список (не только
+  /// часть позиций) — определяет, можно ли честно написать "купить всё".
+  bool get bestSingleStoreHasFullCoverage {
+    final best = bestSingleStore;
+    if (best == null) return false;
+    return foundCountByStore[best.key] == totalItems;
   }
 
   String storeDisplayName(String slug) => storeDisplayNames[slug] ?? slug;
