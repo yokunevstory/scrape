@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../ads/ad_consent.dart';
 import '../app_settings/locale_controller.dart';
 import '../l10n/gen/app_localizations.dart';
 import 'watchlist_screen.dart';
@@ -15,6 +16,18 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   bool _personalizedAds = false;
   bool _savingConsent = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Переключатель раньше всегда открывался выключенным, даже если
+    // пользователь уже разрешил персонализированную рекламу раньше —
+    // теперь от этого согласия реально зависит, какую рекламу показывать
+    // (см. widgets/ad_banner.dart), так что подгружаем сохранённое значение.
+    hasPersonalizedAdsConsent().then((value) {
+      if (mounted) setState(() => _personalizedAds = value);
+    });
+  }
 
   Future<void> _setPersonalizedAds(bool value) async {
     setState(() {

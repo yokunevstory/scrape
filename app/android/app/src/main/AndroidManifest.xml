@@ -1,4 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Debug-сборки уже получают его через android/app/src/debug/AndroidManifest.xml
+         (для hot reload), но AdMob и release-сборка требуют его явно здесь. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <application
         android:label="app"
         android:name="${applicationName}"
@@ -30,6 +33,13 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+
+        <!-- AdMob App ID — сейчас тестовый ID Google (см. lib/ads/ad_config.dart
+             и SETUP.md §6), без реального AdMob-аккаунта показывает только
+             тестовые объявления. Заменить на свой перед релизом. -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-3940256099942544~3347511713" />
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

@@ -43,6 +43,7 @@ dependencies:
   # Хранит выбранный пользователем язык между запусками (RU/LV,
   # см. lib/l10n/ и lib/app_settings/locale_controller.dart).
   shared_preferences: ^2.5.5
+  google_mobile_ads: ^9.0.0
 
 dev_dependencies:
   flutter_test:

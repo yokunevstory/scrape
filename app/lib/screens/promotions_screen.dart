@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../data/models.dart';
 import '../data/product_repository.dart';
 import '../l10n/gen/app_localizations.dart';
+import '../widgets/ad_banner.dart';
 import '../widgets/collapsible_category_section.dart';
 import '../widgets/product_card.dart';
 
@@ -67,10 +68,13 @@ class _PromotionsScreenState extends State<PromotionsScreen> {
 
           return ListView.separated(
             padding: const EdgeInsets.all(16),
-            itemCount: categories.length + 1,
+            itemCount: categories.length + 2,
             separatorBuilder: (_, _) => const SizedBox(height: 8),
             itemBuilder: (context, index) {
-              if (index == categories.length) {
+              if (index == 0) {
+                return const Center(child: AdBanner());
+              }
+              if (index == categories.length + 1) {
                 return Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8),
                   child: Text(
@@ -82,7 +86,7 @@ class _PromotionsScreenState extends State<PromotionsScreen> {
                   ),
                 );
               }
-              final category = categories[index];
+              final category = categories[index - 1];
               final items = byCategory[category]!;
               return CollapsibleCategorySection<StoreProductRow>(
                 title: category,

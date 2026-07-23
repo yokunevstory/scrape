@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../data/top_categories.dart';
 import '../l10n/gen/app_localizations.dart';
 import '../theme/app_theme.dart';
+import '../widgets/ad_banner.dart';
 import 'category_products_screen.dart';
 import 'matched_products_screen.dart';
 import 'search_screen.dart';
@@ -45,6 +46,7 @@ class CatalogScreen extends StatelessWidget {
               child: _MatchedProductsBanner(),
             ),
           ),
+          const SliverToBoxAdapter(child: Center(child: AdBanner())),
           SliverPadding(
             padding: const EdgeInsets.all(16),
             sliver: SliverGrid(

@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'app_settings/locale_controller.dart';
@@ -16,6 +19,11 @@ Future<void> main() async {
       publishableKey: Env.supabaseAnonKey,
     );
   }
+  // Не блокируем старт приложения ожиданием инициализации рекламного SDK —
+  // баннеры (см. widgets/ad_banner.dart) сами дождутся готовности через
+  // AdWidget/BannerAd.load(), а если инициализация ещё не завершилась к
+  // моменту первой загрузки баннера, google_mobile_ads это переживёт.
+  unawaited(MobileAds.instance.initialize());
   final localeController = LocaleController();
   await localeController.load();
   runApp(PriceCompareApp(localeController: localeController));
