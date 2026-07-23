@@ -1,4 +1,4 @@
-package lv.pricecompare.app
+package lv.centik.app
 
 import io.flutter.embedding.android.FlutterActivity
 

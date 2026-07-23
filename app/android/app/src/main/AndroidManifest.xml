@@ -3,7 +3,7 @@
          (для hot reload), но AdMob и release-сборка требуют его явно здесь. -->
     <uses-permission android:name="android.permission.INTERNET"/>
     <application
-        android:label="app"
+        android:label="Centik"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

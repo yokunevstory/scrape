@@ -26,19 +26,19 @@ Future<void> main() async {
   unawaited(MobileAds.instance.initialize());
   final localeController = LocaleController();
   await localeController.load();
-  runApp(PriceCompareApp(localeController: localeController));
+  runApp(CentikApp(localeController: localeController));
 }
 
-class PriceCompareApp extends StatefulWidget {
-  const PriceCompareApp({super.key, required this.localeController});
+class CentikApp extends StatefulWidget {
+  const CentikApp({super.key, required this.localeController});
 
   final LocaleController localeController;
 
   @override
-  State<PriceCompareApp> createState() => _PriceCompareAppState();
+  State<CentikApp> createState() => _CentikAppState();
 }
 
-class _PriceCompareAppState extends State<PriceCompareApp> {
+class _CentikAppState extends State<CentikApp> {
   @override
   void initState() {
     super.initState();

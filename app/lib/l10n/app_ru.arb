@@ -1,7 +1,7 @@
 {
   "@@locale": "ru",
 
-  "appTitle": "PriceCompare LV",
+  "appTitle": "Centik",
   "@appTitle": {"description": "Название приложения"},
 
   "navCatalog": "Каталог",
