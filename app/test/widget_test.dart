@@ -43,4 +43,35 @@ void main() {
     expect(find.text('Каталог'), findsWidgets);
     expect(find.byIcon(Icons.compare_arrows), findsOneWidget);
   });
+
+  testWidgets('English locale renders translated navigation labels',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(LocaleScope(
+      controller: LocaleController(),
+      child: MaterialApp(
+        theme: buildAppTheme(Brightness.light),
+        locale: const Locale('en'),
+        supportedLocales: AppLocalizations.supportedLocales,
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        home: const HomeShell(),
+      ),
+    ));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Catalog'), findsWidgets);
+    expect(find.text('Profile'), findsWidgets);
+
+    await tester.tap(find.text('Profile').last);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Language'), findsOneWidget);
+    expect(find.text('English'), findsOneWidget);
+    expect(find.text('Русский'), findsOneWidget);
+    expect(find.text('Latviešu'), findsOneWidget);
+  });
 }

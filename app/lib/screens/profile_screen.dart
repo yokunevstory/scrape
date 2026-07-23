@@ -98,6 +98,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   segments: [
                     ButtonSegment(value: const Locale('ru'), label: Text(t.languageRussian)),
                     ButtonSegment(value: const Locale('lv'), label: Text(t.languageLatvian)),
+                    ButtonSegment(value: const Locale('en'), label: Text(t.languageEnglish)),
                   ],
                   selected: {localeController.locale},
                   onSelectionChanged: (selection) =>

@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Язык интерфейса (ru/lv). По умолчанию берётся из локали устройства (если
+/// Язык интерфейса (ru/lv/en). По умолчанию берётся из локали устройства (если
 /// это один из поддерживаемых языков, иначе — русский); после того как
 /// пользователь явно выбрал язык в профиле, выбор сохраняется и применяется
 /// при следующих запусках, независимо от локали устройства.
 class LocaleController extends ChangeNotifier {
   static const _prefsKey = 'app_locale';
-  static const supportedLocales = [Locale('ru'), Locale('lv')];
+  static const supportedLocales = [Locale('ru'), Locale('lv'), Locale('en')];
 
   Locale _locale = supportedLocales.first;
   Locale get locale => _locale;
