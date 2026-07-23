@@ -74,8 +74,10 @@ Solo, Netto, Beta, Sky, Aibe, IKI.
 Всё собрано в [`SETUP.md`](SETUP.md):
 1. §1-2 — Supabase-проекты и миграции (предположительно уже сделано, приложение работает).
 2. §5 — 4 GitHub Secrets для автоскрапинга (`SUPABASE_APP_URL`, `SUPABASE_APP_SERVICE_KEY`,
-   `SUPABASE_ARCHIVE_URL`, `SUPABASE_ARCHIVE_SERVICE_KEY`) — **скорее всего ещё не заведены**,
-   стоит уточнить в начале новой сессии.
+   `SUPABASE_ARCHIVE_URL`, `SUPABASE_ARCHIVE_SERVICE_KEY`) — **заведены** (подтверждено
+   пользователем 2026-07-23). У меня нет `gh`/доступа к Actions в этой среде, чтобы самому
+   проверить историю прогонов — если нужно перепроверить, что workflow реально отрабатывает,
+   попросить пользователя посмотреть вкладку **Actions** в репозитории.
 3. §6 — AdMob-аккаунт (admob.google.com) → прислать App ID и Ad unit ID, я подставлю вместо
    тестовых в `AndroidManifest.xml` и `lib/ads/ad_config.dart`.
 
