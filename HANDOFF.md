@@ -8,7 +8,8 @@
 
 Мобильное приложение (Flutter, Android-first) для сравнения цен на продукты между магазинами
 Латвии, бэкенд — Supabase. Пользователь — info@yokunev.com, общается по-русски, интерфейс
-приложения на русском и латышском (переключается в профиле).
+приложения на русском, латышском и английском (переключается в профиле, `lib/l10n/app_ru.arb`/
+`app_lv.arb`/`app_en.arb`).
 
 **Название приложения выбрано: `Centik`.** Переименовано в коде: `lib/l10n/app_ru.arb`/`app_lv.arb`
 (`appTitle`), Android `applicationId`/`namespace` (`lv.centik.app` в `android/app/build.gradle.kts`),
@@ -61,8 +62,9 @@ Solo, Netto, Beta, Sky, Aibe, IKI.
   - `data/` — `models.dart` (StoreProductRow, MatchedProduct, WatchlistEntry, BasketSummary),
     `product_repository.dart`, `shopping_list_repository.dart`, `watchlist_repository.dart`,
     `top_categories.dart` (категории каталога, ключи для локализации).
-  - `l10n/` — `app_ru.arb`/`app_lv.arb` (исходники), `gen/` (сгенерированное, в .gitignore,
-    пересоздаётся `flutter gen-l10n` автоматически при `flutter pub get`/build).
+  - `l10n/` — `app_ru.arb`/`app_lv.arb`/`app_en.arb` (исходники, ru — template-файл в
+    `l10n.yaml`), `gen/` (сгенерированное, в .gitignore, пересоздаётся `flutter gen-l10n`
+    автоматически при `flutter pub get`/build/`flutter analyze`).
   - `app_settings/locale_controller.dart` — текущий язык, персистится в SharedPreferences.
   - `ads/` — AdMob (баннеры на catalog и promotions, **сейчас тестовые ID Google**, см. ниже).
   - `widgets/` — переиспользуемые: `product_card.dart`, `matched_product_card.dart`,
