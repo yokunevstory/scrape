@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../data/models.dart';
 import '../data/product_repository.dart';
+import '../l10n/gen/app_localizations.dart';
 import '../widgets/product_results_list.dart';
 
 /// Поиск товаров по названию across обоих магазинов (Rimi + Barbora) —
@@ -38,13 +39,14 @@ class _SearchScreenState extends State<SearchScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
         title: TextField(
           controller: _controller,
           autofocus: widget.initialQuery == null,
-          decoration: const InputDecoration(
-            hintText: 'Найти товар, например «кетчуп»',
+          decoration: InputDecoration(
+            hintText: t.searchHint,
             border: InputBorder.none,
           ),
           textInputAction: TextInputAction.search,
@@ -62,9 +64,7 @@ class _SearchScreenState extends State<SearchScreen> {
               child: Padding(
                 padding: const EdgeInsets.all(24),
                 child: Text(
-                  'Введите название товара, например «кетчуп» или «piens» — '
-                  'покажем предложения из всех подключённых магазинов, '
-                  'отсортированные по цене за единицу.',
+                  t.searchEmptyHint,
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
@@ -72,8 +72,7 @@ class _SearchScreenState extends State<SearchScreen> {
             )
           : ProductResultsList(
               future: _future!,
-              emptyText: 'Ничего не нашлось по запросу «$_query». '
-                  'Возможно, скрапер ещё не проходил по этим товарам.',
+              emptyText: t.searchNoResults(_query),
             ),
     );
   }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../data/models.dart';
 import '../data/watchlist_repository.dart';
+import '../l10n/gen/app_localizations.dart';
 
 /// Кнопка «слежу за товаром» на карточке — тап добавляет/убирает товар из
 /// списка отслеживания (см. lib/screens/watchlist_screen.dart). Если товар
@@ -43,13 +44,14 @@ class _WatchButtonState extends State<WatchButton> {
     if (_watched == null) {
       return const SizedBox(width: 32, height: 32);
     }
+    final t = AppLocalizations.of(context)!;
     return IconButton(
       icon: Icon(_watched! ? Icons.bookmark : Icons.bookmark_border),
       color: _watched! ? Theme.of(context).colorScheme.primary : null,
       iconSize: 20,
       constraints: const BoxConstraints(),
       padding: EdgeInsets.zero,
-      tooltip: _watched! ? 'Убрать из отслеживаемых' : 'Следить за ценой во всех магазинах',
+      tooltip: _watched! ? t.tooltipRemoveFromWatch : t.tooltipAddToWatch,
       onPressed: _toggle,
     );
   }

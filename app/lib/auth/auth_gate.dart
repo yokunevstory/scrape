@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../config/env.dart';
+import '../l10n/gen/app_localizations.dart';
 import '../screens/home_shell.dart';
 import 'sign_in_screen.dart';
 
@@ -39,10 +40,7 @@ class _NotConfiguredScreen extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Text(
-            'Supabase не настроен: запустите приложение с '
-            '--dart-define=SUPABASE_URL=... и '
-            '--dart-define=SUPABASE_ANON_KEY=... '
-            '(см. scripts/build_web.bat).',
+            AppLocalizations.of(context)!.notConfiguredMessage,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyLarge,
           ),

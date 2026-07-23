@@ -33,6 +33,11 @@ migrate_working_dir/
 /build/
 /coverage/
 
+# Сгенерировано из lib/l10n/app_*.arb через `flutter gen-l10n` (запускается
+# автоматически при `flutter pub get`/build благодаря `generate: true` в
+# pubspec.yaml) — не редактировать руками, не коммитить.
+lib/l10n/gen/
+
 # Symbolication related
 app.*.symbols
 

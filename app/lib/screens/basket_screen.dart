@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../data/models.dart';
 import '../data/product_repository.dart';
 import '../data/shopping_list_repository.dart';
+import '../l10n/gen/app_localizations.dart';
 import '../theme/app_theme.dart';
 import '../widgets/matched_product_card.dart';
 import '../widgets/product_card.dart';
@@ -139,15 +140,16 @@ class BasketScreenState extends State<BasketScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = context.appColors;
+    final t = AppLocalizations.of(context)!;
     final summary = BasketSummary.fromEntries(_items.map((e) => e.$2).toList());
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Список покупок'),
+        title: Text(t.basketTitle),
         actions: [
           IconButton(
             icon: Icon(_searchExpanded ? Icons.close : Icons.search),
-            tooltip: 'Добавить товар поиском',
+            tooltip: t.tooltipSearchInList,
             onPressed: () => setState(() {
               _searchExpanded = !_searchExpanded;
               if (!_searchExpanded) _searchFuture = null;
@@ -164,13 +166,13 @@ class BasketScreenState extends State<BasketScreen> {
                 controller: _searchController,
                 autofocus: true,
                 decoration: InputDecoration(
-                  hintText: 'Найти товар, например «кетчуп»',
+                  hintText: t.searchHint,
                   border: const OutlineInputBorder(),
                   isDense: true,
                   prefixIcon: const Icon(Icons.search),
                   suffixIcon: IconButton(
                     icon: const Icon(Icons.arrow_forward),
-                    tooltip: 'Найти',
+                    tooltip: t.tooltipFindButton,
                     onPressed: () => _runSearch(_searchController.text),
                   ),
                 ),
@@ -181,12 +183,11 @@ class BasketScreenState extends State<BasketScreen> {
             SizedBox(
               height: 260,
               child: _searchFuture == null
-                  ? const Center(
+                  ? Center(
                       child: Padding(
-                        padding: EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(16),
                         child: Text(
-                          'Введите название товара и нажмите на значок корзины у '
-                          'нужного результата — он сразу попадёт в список ниже.',
+                          t.searchInListEmptyHint,
                           textAlign: TextAlign.center,
                         ),
                       ),
@@ -198,11 +199,11 @@ class BasketScreenState extends State<BasketScreen> {
                           return const Center(child: CircularProgressIndicator());
                         }
                         if (snapshot.hasError) {
-                          return Center(child: Text('Ошибка поиска: ${snapshot.error}'));
+                          return Center(child: Text(t.searchErrorGeneric('${snapshot.error}')));
                         }
                         final results = snapshot.data ?? [];
                         if (results.isEmpty) {
-                          return const Center(child: Text('Ничего не нашлось.'));
+                          return Center(child: Text(t.searchNoResultsSimple));
                         }
                         return ListView.separated(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -223,13 +224,11 @@ class BasketScreenState extends State<BasketScreen> {
             child: _loading
                 ? const Center(child: CircularProgressIndicator())
                 : _items.isEmpty
-                    ? const Center(
+                    ? Center(
                         child: Padding(
-                          padding: EdgeInsets.all(24),
+                          padding: const EdgeInsets.all(24),
                           child: Text(
-                            'Список пуст. Нажмите на значок корзины на карточке '
-                            'товара (в поиске, категориях или здесь через лупу), '
-                            'чтобы добавить его сюда.',
+                            t.basketEmptyHint,
                             textAlign: TextAlign.center,
                           ),
                         ),
@@ -265,7 +264,7 @@ class BasketScreenState extends State<BasketScreen> {
                                   ),
                                   IconButton(
                                     icon: const Icon(Icons.close),
-                                    tooltip: 'Убрать из списка',
+                                    tooltip: t.tooltipRemoveFromBasket,
                                     onPressed: () => _removeItem(itemId),
                                   ),
                                 ],
@@ -280,12 +279,10 @@ class BasketScreenState extends State<BasketScreen> {
                 builder: (context) {
                   final best = summary.bestSingleStore;
                   if (best == null) {
-                    return const Card(
+                    return Card(
                       child: Padding(
-                        padding: EdgeInsets.all(16),
-                        child: Text(
-                          'Ничего из списка не нашлось в текущих данных магазинов.',
-                        ),
+                        padding: const EdgeInsets.all(16),
+                        child: Text(t.basketNothingFound),
                       ),
                     );
                   }
@@ -301,16 +298,16 @@ class BasketScreenState extends State<BasketScreen> {
                           if (!_showSplit) ...[
                             Text(
                               summary.bestSingleStoreHasFullCoverage
-                                  ? 'Дешевле всего купить всё в '
-                                      '${summary.storeDisplayName(best.key)}'
-                                  : 'Дешевле всего (но не всё есть) в '
-                                      '${summary.storeDisplayName(best.key)}',
+                                  ? t.cheapestFullCoverage(summary.storeDisplayName(best.key))
+                                  : t.cheapestPartialCoverage(summary.storeDisplayName(best.key)),
                               style: Theme.of(context).textTheme.titleMedium,
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              '${summary.foundCountByStore[best.key]} из '
-                              '${summary.totalItems} позиций найдено',
+                              t.foundCountLine(
+                                summary.foundCountByStore[best.key] ?? 0,
+                                summary.totalItems,
+                              ),
                               style: Theme.of(context).textTheme.bodySmall,
                             ),
                             const SizedBox(height: 4),
@@ -323,7 +320,7 @@ class BasketScreenState extends State<BasketScreen> {
                             ),
                           ] else ...[
                             Text(
-                              'Разбивка по магазинам (${summary.splitStoreCount})',
+                              t.splitBreakdownTitle(summary.splitStoreCount),
                               style: Theme.of(context).textTheme.titleMedium,
                             ),
                             const SizedBox(height: 4),
@@ -337,10 +334,10 @@ class BasketScreenState extends State<BasketScreen> {
                             if (splitSavings > 0.01) ...[
                               const SizedBox(height: 2),
                               Text(
-                                'Экономия ещё ${splitSavings.toStringAsFixed(2)} € — '
-                                'но ${summary.splitStoreCount} '
-                                '${summary.splitStoreCount == 1 ? "магазин" : "магазина"} '
-                                'вместо одного',
+                                t.splitSavingsLine(
+                                  splitSavings.toStringAsFixed(2),
+                                  summary.splitStoreCount,
+                                ),
                                 style: Theme.of(context).textTheme.bodySmall,
                               ),
                             ],
@@ -348,16 +345,11 @@ class BasketScreenState extends State<BasketScreen> {
                           const SizedBox(height: 12),
                           OutlinedButton(
                             onPressed: () => setState(() => _showSplit = !_showSplit),
-                            child: Text(
-                              _showSplit
-                                  ? 'Показать вариант «один магазин»'
-                                  : 'А если по разным магазинам?',
-                            ),
+                            child: Text(_showSplit ? t.buttonShowSplit : t.buttonShowSingle),
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'Цены собраны из открытых источников и могут отличаться '
-                            'от актуальной цены в конкретном магазине.',
+                            t.basketSourceDisclaimer,
                             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                                 ),
@@ -387,6 +379,7 @@ class _StoreItemTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context)!;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
@@ -424,7 +417,7 @@ class _StoreItemTile extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.close),
             iconSize: 20,
-            tooltip: 'Убрать из списка',
+            tooltip: t.tooltipRemoveFromBasket,
             onPressed: onRemove,
           ),
         ],

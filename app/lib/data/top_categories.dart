@@ -1,12 +1,18 @@
+import '../l10n/gen/app_localizations.dart';
+
 /// Категории и субкатегории — сопоставление по подстроке читаемого пути
 /// названий (raw_category_path), не точная таксономия (см. SPEC.md §8.0/§8.2:
 /// у Rimi и Barbora категории называются немного по-разному). Подстроки для
 /// субкатегорий взяты из реально собранных данных, чтобы тапы точно
 /// показывали товары, а не пустой экран.
+///
+/// [nameKey] — не текст для показа, а идентификатор для categoryLabel() (см.
+/// ниже) — реальный текст берётся из AppLocalizations и зависит от текущего
+/// языка интерфейса, поэтому здесь он не может быть просто строкой.
 class SubCategory {
-  const SubCategory(this.displayName, this.matchPattern,
+  const SubCategory(this.nameKey, this.matchPattern,
       {this.useTopFilter = false, this.orPatterns = const []});
-  final String displayName;
+  final String nameKey;
   final String matchPattern;
 
   /// true — фильтровать и по паттерну подкатегории, И по паттерну
@@ -29,10 +35,10 @@ class SubCategory {
 }
 
 class TopCategory {
-  const TopCategory(this.displayName, this.matchPattern, this.icon,
+  const TopCategory(this.nameKey, this.matchPattern, this.icon,
       {this.subcategories = const [], this.orPatterns = const []});
 
-  final String displayName;
+  final String nameKey;
   final String matchPattern;
   final String icon;
   final List<String> orPatterns;
@@ -43,17 +49,80 @@ class TopCategory {
   List<String> get patternGroup => [matchPattern, ...orPatterns];
 }
 
+/// Резолвит nameKey в текст на текущем языке интерфейса — единое место для
+/// категорий и подкатегорий (у обеих nameKey — это просто ключи из одного и
+/// того же набора catXxx в ARB, см. lib/l10n/app_ru.arb).
+String categoryLabel(AppLocalizations t, String nameKey) {
+  switch (nameKey) {
+    case 'dairy':
+      return t.catDairy;
+    case 'dairyMilk':
+      return t.catDairyMilk;
+    case 'dairyKefir':
+      return t.catDairyKefir;
+    case 'dairyCottage':
+      return t.catDairyCottage;
+    case 'dairyCream':
+      return t.catDairyCream;
+    case 'dairyButter':
+      return t.catDairyButter;
+    case 'meatFish':
+      return t.catMeatFish;
+    case 'meatPork':
+      return t.catMeatPork;
+    case 'meatBeef':
+      return t.catMeatBeef;
+    case 'meatFishFresh':
+      return t.catMeatFishFresh;
+    case 'meatFishProcessed':
+      return t.catMeatFishProcessed;
+    case 'produce':
+      return t.catProduce;
+    case 'produceFruit':
+      return t.catProduceFruit;
+    case 'produceVeg':
+      return t.catProduceVeg;
+    case 'bakery':
+      return t.catBakery;
+    case 'readyMeals':
+      return t.catReadyMeals;
+    case 'grocery':
+      return t.catGrocery;
+    case 'groceryPasta':
+      return t.catGroceryPasta;
+    case 'grocerySnacks':
+      return t.catGrocerySnacks;
+    case 'drinks':
+      return t.catDrinks;
+    case 'drinksWater':
+      return t.catDrinksWater;
+    case 'frozen':
+      return t.catFrozen;
+    case 'frozenIceCream':
+      return t.catFrozenIceCream;
+    case 'frozenVeg':
+      return t.catFrozenVeg;
+    case 'kids':
+      return t.catKids;
+    case 'kidsDiapers':
+      return t.catKidsDiapers;
+    case 'kidsFood':
+      return t.catKidsFood;
+  }
+  return nameKey;
+}
+
 const topCategories = [
-  TopCategory('Молочные продукты', 'Piena produkt', '🥛', subcategories: [
-    SubCategory('Молоко', '/Piens/'),
-    SubCategory('Кефир, ряженка', 'Kefīrs'),
-    SubCategory('Творог', 'Biezpien'),
-    SubCategory('Сметана, сливки', 'krējum'),
-    SubCategory('Масло, маргарин', 'Sviests'),
+  TopCategory('dairy', 'Piena produkt', '🥛', subcategories: [
+    SubCategory('dairyMilk', '/Piens/'),
+    SubCategory('dairyKefir', 'Kefīrs'),
+    SubCategory('dairyCottage', 'Biezpien'),
+    SubCategory('dairyCream', 'krējum'),
+    SubCategory('dairyButter', 'Sviests'),
   ]),
-  TopCategory('Мясо, рыба', 'Gaļa', '🥩', subcategories: [
-    SubCategory('Свинина', 'Cūkgaļa'),
-    SubCategory('Говядина', 'Liellopa'),
+  TopCategory('meatFish', 'Gaļa', '🥩', subcategories: [
+    SubCategory('meatPork', 'Cūkgaļa'),
+    SubCategory('meatBeef', 'Liellopa'),
     // Обычные "zivis"/"kulinārij" не годятся — эти слова есть в самом
     // названии родительской категории ("Gaļa, zivis un gatavā kulinārija"),
     // поэтому такой паттерн совпадал бы вообще со всем в разделе (нашли на
@@ -62,18 +131,18 @@ const topCategories = [
     // те же разделы по-разному ("jūrasveltes" слитно vs "jūras veltes" через
     // пробел, "Pārstrādātās zivis" vs "Zivju produkti") — без альтернативных
     // вариантов рыба у одного из магазинов не находилась вообще.
-    SubCategory('Рыба свежая', 'jūrasveltes', orPatterns: ['Svaigās zivis un jūras veltes']),
+    SubCategory('meatFishFresh', 'jūrasveltes', orPatterns: ['Svaigās zivis un jūras veltes']),
     SubCategory(
-      'Рыба, переработанная и консервы',
+      'meatFishProcessed',
       'Pārstrādātās zivis',
       orPatterns: ['jūras produkti un ikri', 'Zivju produkti'],
     ),
   ]),
-  TopCategory('Овощи, фрукты', 'Augļi un dārzeņi', '🥦', subcategories: [
-    SubCategory('Фрукты, ягоды', '/Augļi'),
-    SubCategory('Овощи', '/Dārzeņi'),
+  TopCategory('produce', 'Augļi un dārzeņi', '🥦', subcategories: [
+    SubCategory('produceFruit', '/Augļi'),
+    SubCategory('produceVeg', '/Dārzeņi'),
   ]),
-  TopCategory('Хлеб, выпечка', 'onditorej', '🍞'),
+  TopCategory('bakery', 'onditorej', '🍞'),
   // "/Gatavā kulinārija/" (со слэшами) — а не просто "kulinārij" — потому
   // что просто "kulinārij" совпадает и с родительской категорией "Gaļa,
   // zivis UN GATAVĀ KULINĀRIJA" целиком (без слэша перед ней), из-за чего
@@ -83,24 +152,24 @@ const topCategories = [
   // "Gatavā"), а свой суши/сэндвич-бренд Rimi "Mani Gardumi gatavā kulinārija"
   // не попадает под первый паттерн (нет "/" перед "gatavā").
   TopCategory(
-    'Готовые блюда',
+    'readyMeals',
     '/Gatavā kulinārija/',
     '🍱',
     orPatterns: ['/Kulinārija/', 'Gardumi gatavā kulinārija'],
   ),
-  TopCategory('Бакалея', 'Bakaleja', '🍝', subcategories: [
-    SubCategory('Макароны', 'Makaroni'),
-    SubCategory('Снеки', 'Uzkodas'),
+  TopCategory('grocery', 'Bakaleja', '🍝', subcategories: [
+    SubCategory('groceryPasta', 'Makaroni'),
+    SubCategory('grocerySnacks', 'Uzkodas'),
   ]),
-  TopCategory('Напитки', 'Dzērien', '🥤', subcategories: [
-    SubCategory('Вода', 'Ūdens'),
+  TopCategory('drinks', 'Dzērien', '🥤', subcategories: [
+    SubCategory('drinksWater', 'Ūdens'),
   ]),
-  TopCategory('Заморозка', 'Sald', '🧊', subcategories: [
-    SubCategory('Мороженое', 'Saldējums'),
-    SubCategory('Замороженные овощи', 'Saldēti dārzeņi'),
+  TopCategory('frozen', 'Sald', '🧊', subcategories: [
+    SubCategory('frozenIceCream', 'Saldējums'),
+    SubCategory('frozenVeg', 'Saldēti dārzeņi'),
   ]),
-  TopCategory('Детские товары', 'bērn', '🍼', subcategories: [
-    SubCategory('Подгузники', 'Autiņbiksīt'),
-    SubCategory('Детское питание, напитки', 'dzērien', useTopFilter: true),
+  TopCategory('kids', 'bērn', '🍼', subcategories: [
+    SubCategory('kidsDiapers', 'Autiņbiksīt'),
+    SubCategory('kidsFood', 'dzērien', useTopFilter: true),
   ]),
 ];

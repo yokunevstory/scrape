@@ -1,3 +1,5 @@
+import '../l10n/gen/app_localizations.dart';
+
 class StoreProductRow {
   const StoreProductRow({
     required this.id,
@@ -34,20 +36,23 @@ class StoreProductRow {
   final String sourceUrl;
 
   /// Атрибуция источника для отображения рядом с ценой — SPEC.md §8.0/§5.
-  String get attribution =>
-      storeSlug == 'barbora' ? 'по данным Barbora' : 'по данным $storeDisplayName';
+  /// Для Barbora — именно название сайта-источника (Barbora), а не название
+  /// сети (Maxima, см. storeDisplayName) — реальные данные берутся с
+  /// barbora.lv, это и есть источник, который честно указать.
+  String attribution(AppLocalizations t) =>
+      t.attributionFormat(storeSlug == 'barbora' ? 'Barbora' : storeDisplayName);
 
   /// Читаемое обозначение единицы для «€/кг» и т.п. вместо общего «ед.».
-  String get unitLabel {
+  String unitLabel(AppLocalizations t) {
     switch (unitType) {
       case 'kg':
-        return 'кг';
+        return t.unitKg;
       case 'l':
-        return 'л';
+        return t.unitL;
       case 'gab':
-        return 'шт';
+        return t.unitPcs;
       default:
-        return 'ед.';
+        return t.unitGeneric;
     }
   }
 
@@ -62,14 +67,18 @@ class StoreProductRow {
   }
 
   /// Читаемое представление веса/объёма, напр. «180 г» или «1.5 л».
-  String? get packageSizeLabel {
+  String? packageSizeLabel(AppLocalizations t) {
     final size = packageSize;
     if (size == null) return null;
     if (unitType == 'kg') {
-      return size < 1 ? '${(size * 1000).round()} г' : '${size.toStringAsFixed(2)} кг';
+      return size < 1
+          ? t.massGrams((size * 1000).round())
+          : t.massKg(size.toStringAsFixed(2));
     }
     if (unitType == 'l') {
-      return size < 1 ? '${(size * 1000).round()} мл' : '${size.toStringAsFixed(2)} л';
+      return size < 1
+          ? t.volumeMl((size * 1000).round())
+          : t.volumeL(size.toStringAsFixed(2));
     }
     return null;
   }
@@ -298,16 +307,26 @@ class BasketSummary {
 }
 
 enum ProductSort {
-  unitPriceAsc('Цена за ед. (сначала дешевле)'),
-  packagePriceAsc('Цена за упаковку (сначала дешевле)'),
-  packageSizeAsc('Вес/объём (сначала меньше)'),
-  packageSizeDesc('Вес/объём (сначала больше)');
-
-  const ProductSort(this.label);
-  final String label;
+  unitPriceAsc,
+  packagePriceAsc,
+  packageSizeAsc,
+  packageSizeDesc,
 }
 
 extension ProductSortX on ProductSort {
+  String label(AppLocalizations t) {
+    switch (this) {
+      case ProductSort.unitPriceAsc:
+        return t.sortUnitPriceAsc;
+      case ProductSort.packagePriceAsc:
+        return t.sortPackagePriceAsc;
+      case ProductSort.packageSizeAsc:
+        return t.sortPackageSizeAsc;
+      case ProductSort.packageSizeDesc:
+        return t.sortPackageSizeDesc;
+    }
+  }
+
   Comparator<StoreProductRow> get comparator {
     switch (this) {
       case ProductSort.unitPriceAsc:

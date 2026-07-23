@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../app_settings/locale_controller.dart';
+import '../l10n/gen/app_localizations.dart';
 import 'watchlist_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -32,20 +34,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _confirmDeleteAccount() async {
+    final t = AppLocalizations.of(context)!;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Удалить аккаунт'),
-        content: const Text(
-          'Удаление аккаунта и всех данных выполняется через отдельный '
-          'защищённый процесс (Edge Function с проверкой личности) — он '
-          'ещё не подключён в этой сборке. Пока что для удаления аккаунта '
-          'напишите на адрес поддержки (см. legal/ACCOUNT_DELETION_POLICY.md).',
-        ),
+        title: Text(t.deleteAccountTitle),
+        content: Text(t.deleteAccountDialogContent),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Понятно'),
+            child: Text(t.dialogOk),
           ),
         ],
       ),
@@ -60,51 +58,76 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final user = Supabase.instance.client.auth.currentUser;
+    final t = AppLocalizations.of(context)!;
+    final localeController = LocaleScope.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Профиль')),
+      appBar: AppBar(title: Text(t.profileTitle)),
       body: ListView(
         children: [
           ListTile(
             leading: const CircleAvatar(child: Icon(Icons.person)),
-            title: Text(user?.email ?? 'Гость'),
-            subtitle: const Text('Аккаунт'),
+            title: Text(user?.email ?? t.guestLabel),
+            subtitle: Text(t.accountLabel),
+          ),
+          const Divider(),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    t.languageSectionTitle,
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                ),
+                SegmentedButton<Locale>(
+                  segments: [
+                    ButtonSegment(value: const Locale('ru'), label: Text(t.languageRussian)),
+                    ButtonSegment(value: const Locale('lv'), label: Text(t.languageLatvian)),
+                  ],
+                  selected: {localeController.locale},
+                  onSelectionChanged: (selection) =>
+                      localeController.setLocale(selection.first),
+                ),
+              ],
+            ),
           ),
           const Divider(),
           SwitchListTile(
-            title: const Text('Персонализированная реклама'),
-            subtitle: const Text('Можно включить или выключить в любой момент'),
+            title: Text(t.personalizedAdsTitle),
+            subtitle: Text(t.personalizedAdsSubtitle),
             value: _personalizedAds,
             onChanged: _savingConsent ? null : _setPersonalizedAds,
           ),
           ListTile(
             leading: const Icon(Icons.bookmark_border),
-            title: const Text('Отслеживаемые товары'),
-            subtitle: const Text('Ловите акции на избранные товары'),
+            title: Text(t.watchlistMenuTitle),
+            subtitle: Text(t.watchlistMenuSubtitle),
             onTap: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const WatchlistScreen()),
             ),
           ),
           ListTile(
             leading: const Icon(Icons.privacy_tip_outlined),
-            title: const Text('Политика конфиденциальности'),
+            title: Text(t.privacyPolicyTitle),
             onTap: () {},
           ),
           ListTile(
             leading: const Icon(Icons.info_outline),
-            title: const Text('О приложении и источниках данных'),
+            title: Text(t.aboutAppTitle),
             onTap: () {},
           ),
           const Divider(),
           ListTile(
             leading: const Icon(Icons.logout),
-            title: const Text('Выйти'),
+            title: Text(t.logoutTitle),
             onTap: () => Supabase.instance.client.auth.signOut(),
           ),
           ListTile(
             leading: Icon(Icons.delete_outline,
                 color: Theme.of(context).colorScheme.error),
-            title: Text('Удалить аккаунт',
+            title: Text(t.deleteAccountTitle,
                 style: TextStyle(color: Theme.of(context).colorScheme.error)),
             onTap: _confirmDeleteAccount,
           ),

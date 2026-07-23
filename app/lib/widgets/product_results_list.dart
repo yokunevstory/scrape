@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../data/models.dart';
-import '../widgets/product_card.dart';
+import '../l10n/gen/app_localizations.dart';
+import 'product_card.dart';
 
 /// Список товаров с сортировкой (цена/цена за ед./вес-объём), индикатором
 /// загрузки/ошибки и дисклеймером об открытых источниках (SPEC.md §5 п.8) —
@@ -21,6 +22,7 @@ class _ProductResultsListState extends State<ProductResultsList> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context)!;
     return FutureBuilder<List<StoreProductRow>>(
       future: widget.future,
       builder: (context, snapshot) {
@@ -31,7 +33,7 @@ class _ProductResultsListState extends State<ProductResultsList> {
           return Center(
             child: Padding(
               padding: const EdgeInsets.all(24),
-              child: Text('Не удалось загрузить товары: ${snapshot.error}'),
+              child: Text(t.loadErrorProducts('${snapshot.error}')),
             ),
           );
         }
@@ -40,7 +42,7 @@ class _ProductResultsListState extends State<ProductResultsList> {
           return Center(
             child: Padding(
               padding: const EdgeInsets.all(24),
-              child: Text(widget.emptyText ?? 'Пока нет данных по этой категории.'),
+              child: Text(widget.emptyText ?? t.defaultEmptyText),
             ),
           );
         }
@@ -62,13 +64,13 @@ class _ProductResultsListState extends State<ProductResultsList> {
                     child: DropdownButtonFormField<ProductSort>(
                       initialValue: _sort,
                       isExpanded: true,
-                      decoration: const InputDecoration(
-                        labelText: 'Сортировка',
+                      decoration: InputDecoration(
+                        labelText: t.sortLabel,
                         isDense: true,
-                        border: OutlineInputBorder(),
+                        border: const OutlineInputBorder(),
                       ),
                       items: ProductSort.values
-                          .map((s) => DropdownMenuItem(value: s, child: Text(s.label)))
+                          .map((s) => DropdownMenuItem(value: s, child: Text(s.label(t))))
                           .toList(),
                       onChanged: (value) {
                         if (value != null) setState(() => _sort = value);
@@ -88,8 +90,7 @@ class _ProductResultsListState extends State<ProductResultsList> {
                     return Padding(
                       padding: const EdgeInsets.symmetric(vertical: 8),
                       child: Text(
-                        'Цены собраны из открытых источников (сайты интернет-магазинов) '
-                        'и могут отличаться от актуальной цены в конкретном магазине.',
+                        t.sourceDisclaimer,
                         textAlign: TextAlign.center,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                               color: Theme.of(context).colorScheme.onSurfaceVariant,

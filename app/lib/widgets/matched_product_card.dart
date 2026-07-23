@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../data/models.dart';
+import '../l10n/gen/app_localizations.dart';
 import '../theme/app_theme.dart';
 import 'add_to_list_button.dart';
 
@@ -16,6 +17,7 @@ class MatchedProductCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.appColors;
+    final t = AppLocalizations.of(context)!;
     final cheapestId = product.cheapest?.id;
     final savings = product.savings;
 
@@ -61,8 +63,10 @@ class MatchedProductCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  'Экономия ${savings.toStringAsFixed(2)} €, если выбрать '
-                  '${product.cheapest!.storeDisplayName}',
+                  t.savingsBanner(
+                    savings.toStringAsFixed(2),
+                    product.cheapest!.storeDisplayName,
+                  ),
                   style: TextStyle(color: colors.savings, fontWeight: FontWeight.w600),
                   textAlign: TextAlign.center,
                 ),
@@ -84,6 +88,7 @@ class _OfferRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.appColors;
+    final t = AppLocalizations.of(context)!;
 
     return Row(
       children: [
@@ -106,7 +111,7 @@ class _OfferRow extends StatelessWidget {
         const SizedBox(width: 10),
         Expanded(
           child: Text(
-            '${offer.storeDisplayName} · ${offer.attribution}',
+            '${offer.storeDisplayName} · ${offer.attribution(t)}',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(

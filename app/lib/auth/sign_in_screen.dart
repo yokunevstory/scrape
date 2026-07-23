@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../l10n/gen/app_localizations.dart';
 import 'consent.dart';
 
 class SignInScreen extends StatefulWidget {
@@ -27,9 +28,9 @@ class _SignInScreenState extends State<SignInScreen> {
   }
 
   Future<void> _submit() async {
+    final t = AppLocalizations.of(context)!;
     if (_isSignUp && !_consentGiven) {
-      setState(() => _error =
-          'Нужно подтвердить согласие на обработку данных, чтобы создать аккаунт.');
+      setState(() => _error = t.consentRequiredError);
       return;
     }
 
@@ -56,9 +57,7 @@ class _SignInScreenState extends State<SignInScreen> {
           // сессии пока нет, согласие запишется при первом входе после
           // подтверждения (см. ensureAccountConsentRecorded ниже).
           setState(() {
-            _info = 'Аккаунт создан. Проверьте почту '
-                '${_emailController.text.trim()} и подтвердите email по '
-                'ссылке из письма, затем войдите с этим паролем.';
+            _info = t.signUpSuccessInfo(_emailController.text.trim());
             _isSignUp = false;
           });
         }
@@ -75,7 +74,7 @@ class _SignInScreenState extends State<SignInScreen> {
     } on AuthException catch (e) {
       setState(() => _error = e.message);
     } catch (e) {
-      setState(() => _error = 'Не удалось выполнить запрос: $e');
+      setState(() => _error = t.genericRequestError('$e'));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -83,6 +82,7 @@ class _SignInScreenState extends State<SignInScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context)!;
     return Scaffold(
       body: SafeArea(
         child: Center(
@@ -94,13 +94,13 @@ class _SignInScreenState extends State<SignInScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(
-                    'PriceCompare LV',
+                    t.appTitle,
                     style: Theme.of(context).textTheme.headlineSmall,
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    _isSignUp ? 'Создать аккаунт' : 'Вход',
+                    _isSignUp ? t.signUpTitle : t.signInTitle,
                     style: Theme.of(context).textTheme.titleMedium,
                     textAlign: TextAlign.center,
                   ),
@@ -108,18 +108,18 @@ class _SignInScreenState extends State<SignInScreen> {
                   TextField(
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
-                    decoration: const InputDecoration(
-                      labelText: 'Email',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: t.emailLabel,
+                      border: const OutlineInputBorder(),
                     ),
                   ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: _passwordController,
                     obscureText: true,
-                    decoration: const InputDecoration(
-                      labelText: 'Пароль',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: t.passwordLabel,
+                      border: const OutlineInputBorder(),
                     ),
                   ),
                   if (_isSignUp) ...[
@@ -130,10 +130,9 @@ class _SignInScreenState extends State<SignInScreen> {
                       value: _consentGiven,
                       onChanged: (value) =>
                           setState(() => _consentGiven = value ?? false),
-                      title: const Text(
-                        'Согласен(-на) с условиями обработки данных, '
-                        'описанными в Политике конфиденциальности',
-                        style: TextStyle(fontSize: 13),
+                      title: Text(
+                        t.consentCheckboxLabel,
+                        style: const TextStyle(fontSize: 13),
                       ),
                     ),
                   ],
@@ -160,7 +159,7 @@ class _SignInScreenState extends State<SignInScreen> {
                             height: 20,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : Text(_isSignUp ? 'Зарегистрироваться' : 'Войти'),
+                        : Text(_isSignUp ? t.buttonSignUp : t.buttonSignIn),
                   ),
                   const SizedBox(height: 8),
                   TextButton(
@@ -169,11 +168,7 @@ class _SignInScreenState extends State<SignInScreen> {
                       _error = null;
                       _info = null;
                     }),
-                    child: Text(
-                      _isSignUp
-                          ? 'Уже есть аккаунт? Войти'
-                          : 'Нет аккаунта? Зарегистрироваться',
-                    ),
+                    child: Text(_isSignUp ? t.toggleToSignIn : t.toggleToSignUp),
                   ),
                 ],
               ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../data/models.dart';
 import '../data/shopping_list_repository.dart';
+import '../l10n/gen/app_localizations.dart';
 
 /// Кнопка «в список покупок» на карточке — тап добавляет/убирает товар из
 /// списка (см. lib/screens/basket_screen.dart). Если товар сматчен между
@@ -47,13 +48,14 @@ class _AddToListButtonState extends State<AddToListButton> {
     if (_inList == null) {
       return const SizedBox(width: 32, height: 32);
     }
+    final t = AppLocalizations.of(context)!;
     return IconButton(
       icon: Icon(_inList! ? Icons.shopping_cart : Icons.add_shopping_cart_outlined),
       color: _inList! ? Theme.of(context).colorScheme.primary : null,
       iconSize: 20,
       constraints: const BoxConstraints(),
       padding: EdgeInsets.zero,
-      tooltip: _inList! ? 'Убрать из списка покупок' : 'Добавить в список покупок',
+      tooltip: _inList! ? t.tooltipRemoveFromList : t.tooltipAddToList,
       onPressed: _toggle,
     );
   }

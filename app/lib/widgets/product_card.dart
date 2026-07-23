@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../data/models.dart';
+import '../l10n/gen/app_localizations.dart';
 import '../theme/app_theme.dart';
 import 'add_to_list_button.dart';
 import 'watch_button.dart';
@@ -27,6 +28,8 @@ class ProductCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.appColors;
+    final t = AppLocalizations.of(context)!;
+    final sizeLabel = product.packageSizeLabel(t);
 
     return Card(
       shape: highlighted
@@ -69,10 +72,10 @@ class ProductCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    product.packageSizeLabel != null
-                        ? '${product.storeDisplayName} · ${product.attribution} · '
-                            '${product.packageSizeLabel}'
-                        : '${product.storeDisplayName} · ${product.attribution}',
+                    sizeLabel != null
+                        ? '${product.storeDisplayName} · ${product.attribution(t)} · '
+                            '$sizeLabel'
+                        : '${product.storeDisplayName} · ${product.attribution(t)}',
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -86,13 +89,13 @@ class ProductCard extends StatelessWidget {
                     children: [
                       if (isCheapest)
                         _Badge(
-                          text: 'Дешевле всего за единицу',
+                          text: t.badgeCheapestPerUnit,
                           background: colors.savingsContainer,
                           foreground: colors.savings,
                         ),
                       if (product.isPromo)
                         _Badge(
-                          text: 'Акция',
+                          text: t.badgePromo,
                           background: colors.deal,
                           foreground: colors.onDeal,
                         ),
@@ -134,7 +137,7 @@ class ProductCard extends StatelessWidget {
                 ),
                 if (product.unitPrice != null)
                   Text(
-                    '${product.unitPrice!.toStringAsFixed(2)} €/${product.unitLabel}',
+                    '${product.unitPrice!.toStringAsFixed(2)} €/${product.unitLabel(t)}',
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
               ],

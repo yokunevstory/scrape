@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/gen/app_localizations.dart';
 import 'basket_screen.dart';
 import 'catalog_screen.dart';
 import 'profile_screen.dart';
@@ -28,6 +29,7 @@ class _HomeShellState extends State<HomeShell> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context)!;
     return Scaffold(
       body: IndexedStack(index: _index, children: _screens),
       bottomNavigationBar: NavigationBar(
@@ -41,12 +43,13 @@ class _HomeShellState extends State<HomeShell> {
             _basketKey.currentState?.reload();
           }
         },
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.grid_view_outlined), label: 'Каталог'),
-          NavigationDestination(icon: Icon(Icons.compare_arrows), label: 'Поиск'),
-          NavigationDestination(icon: Icon(Icons.list_alt_outlined), label: 'Список'),
-          NavigationDestination(icon: Icon(Icons.local_offer_outlined), label: 'Акции'),
-          NavigationDestination(icon: Icon(Icons.person_outline), label: 'Профиль'),
+        destinations: [
+          NavigationDestination(icon: const Icon(Icons.grid_view_outlined), label: t.navCatalog),
+          NavigationDestination(icon: const Icon(Icons.compare_arrows), label: t.navSearch),
+          NavigationDestination(icon: const Icon(Icons.list_alt_outlined), label: t.navList),
+          NavigationDestination(
+              icon: const Icon(Icons.local_offer_outlined), label: t.navPromotions),
+          NavigationDestination(icon: const Icon(Icons.person_outline), label: t.navProfile),
         ],
       ),
     );

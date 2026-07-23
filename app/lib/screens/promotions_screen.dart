@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../data/mock_data.dart';
+import '../l10n/gen/app_localizations.dart';
 import '../theme/app_theme.dart';
 
 class PromotionsScreen extends StatelessWidget {
@@ -9,15 +10,18 @@ class PromotionsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.appColors;
+    final t = AppLocalizations.of(context)!;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Акции')),
+      appBar: AppBar(title: Text(t.promotionsTitle)),
       body: ListView.separated(
         padding: const EdgeInsets.all(16),
         itemCount: mockPromos.length,
         separatorBuilder: (_, _) => const SizedBox(height: 12),
         itemBuilder: (context, index) {
           final promo = mockPromos[index];
+          final attribution =
+              t.attributionFormat(promo.storeSlug == 'barbora' ? 'Barbora' : promo.store);
           return Card(
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -46,7 +50,7 @@ class PromotionsScreen extends StatelessWidget {
                         Text(promo.name,
                             style: Theme.of(context).textTheme.titleSmall),
                         Text(
-                          '${promo.store} · ${promo.attribution}',
+                          '${promo.store} · $attribution',
                           style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                 color: Theme.of(context)
                                     .colorScheme
@@ -55,8 +59,7 @@ class PromotionsScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          '30-дневная минимальная цена: '
-                          '${promo.lowestPrice30d.toStringAsFixed(2)} €',
+                          t.lowestPrice30d(promo.lowestPrice30d.toStringAsFixed(2)),
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
                       ],

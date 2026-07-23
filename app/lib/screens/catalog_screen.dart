@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../data/top_categories.dart';
+import '../l10n/gen/app_localizations.dart';
 import '../theme/app_theme.dart';
 import 'category_products_screen.dart';
 import 'matched_products_screen.dart';
@@ -12,9 +13,10 @@ class CatalogScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Каталог'),
+        title: Text(t.navCatalog),
       ),
       body: CustomScrollView(
         slivers: [
@@ -22,7 +24,7 @@ class CatalogScreen extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
               child: SearchBar(
-                hintText: 'Найти товар, например «кетчуп»',
+                hintText: t.searchHint,
                 leading: const Icon(Icons.search),
                 elevation: const WidgetStatePropertyAll(0),
                 backgroundColor: WidgetStatePropertyAll(
@@ -73,6 +75,8 @@ class _CategoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context)!;
+    final name = categoryLabel(t, category.nameKey);
     return Card(
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
@@ -80,7 +84,7 @@ class _CategoryCard extends StatelessWidget {
           MaterialPageRoute(
             builder: (_) => category.subcategories.isEmpty
                 ? CategoryProductsScreen(
-                    title: category.displayName,
+                    title: name,
                     matchPatterns: [category.patternGroup],
                   )
                 : SubcategoryListScreen(category: category),
@@ -96,7 +100,7 @@ class _CategoryCard extends StatelessWidget {
               Text(category.icon, style: const TextStyle(fontSize: 24)),
               const SizedBox(height: 6),
               Text(
-                category.displayName,
+                name,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.titleSmall,
@@ -113,6 +117,7 @@ class _MatchedProductsBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.appColors;
+    final t = AppLocalizations.of(context)!;
     return Card(
       color: colors.savingsContainer,
       child: InkWell(
@@ -131,14 +136,14 @@ class _MatchedProductsBanner extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Сопоставленные товары',
+                      t.matchedProductsBannerTitle,
                       style: Theme.of(context)
                           .textTheme
                           .titleSmall
                           ?.copyWith(color: colors.savings, fontWeight: FontWeight.bold),
                     ),
                     Text(
-                      'Один и тот же товар в Rimi и Maxima — рядом',
+                      t.matchedProductsBannerSubtitle,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: colors.savings,
                           ),

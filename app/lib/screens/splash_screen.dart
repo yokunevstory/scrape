@@ -3,11 +3,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../auth/auth_gate.dart';
+import '../l10n/gen/app_localizations.dart';
 
 /// Загрузочный экран — логотип + слоган, коротко показывается при старте
-/// перед AuthGate. Текст слогана берётся по языку устройства (ru -> русский,
-/// иначе — английский); остальной интерфейс приложения пока не локализован
-/// (весь UI на русском), это касается только самого слогана на этом экране.
+/// перед AuthGate. Слоган берётся из уже выбранного языка интерфейса
+/// (см. LocaleController, main.dart) — к этому моменту он уже загружен.
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -29,9 +29,6 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isRussian =
-        WidgetsBinding.instance.platformDispatcher.locale.languageCode == 'ru';
-
     return Scaffold(
       backgroundColor: const Color(0xFF0F6E73),
       body: Center(
@@ -47,9 +44,7 @@ class _SplashScreenState extends State<SplashScreen> {
               ),
               const SizedBox(height: 28),
               Text(
-                isRussian
-                    ? 'Самая выгодная корзина — автоматически.'
-                    : 'Your cheapest basket. Automatically.',
+                AppLocalizations.of(context)!.splashTagline,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   color: Colors.white,

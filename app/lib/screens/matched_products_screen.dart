@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../data/models.dart';
 import '../data/product_repository.dart';
+import '../l10n/gen/app_localizations.dart';
 import '../widgets/matched_product_card.dart';
 
 /// Товары, гарантированно сопоставленные между Rimi и Maxima (Barbora) —
@@ -27,8 +28,9 @@ class _MatchedProductsScreenState extends State<MatchedProductsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(title: const Text('Сопоставленные товары')),
+      appBar: AppBar(title: Text(t.matchedProductsTitle)),
       body: FutureBuilder<List<MatchedProduct>>(
         future: _future,
         builder: (context, snapshot) {
@@ -39,18 +41,17 @@ class _MatchedProductsScreenState extends State<MatchedProductsScreen> {
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(24),
-                child: Text('Не удалось загрузить: ${snapshot.error}'),
+                child: Text(t.loadErrorGeneric('${snapshot.error}')),
               ),
             );
           }
           final products = snapshot.data ?? [];
           if (products.isEmpty) {
-            return const Center(
+            return Center(
               child: Padding(
-                padding: EdgeInsets.all(24),
+                padding: const EdgeInsets.all(24),
                 child: Text(
-                  'Пока нет сопоставленных товаров — скрапер и сопоставление '
-                  'ещё не проходили по всему ассортименту.',
+                  t.matchedProductsEmpty,
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -59,7 +60,7 @@ class _MatchedProductsScreenState extends State<MatchedProductsScreen> {
 
           final byCategory = <String, List<MatchedProduct>>{};
           for (final p in products) {
-            byCategory.putIfAbsent(p.topCategory ?? 'Другое', () => []).add(p);
+            byCategory.putIfAbsent(p.topCategory ?? t.categoryOther, () => []).add(p);
           }
           final categories = byCategory.keys.toList()..sort();
 
@@ -72,9 +73,7 @@ class _MatchedProductsScreenState extends State<MatchedProductsScreen> {
                 return Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8),
                   child: Text(
-                    'Товары сопоставлены автоматически по названию, бренду и '
-                    'весу/объёму упаковки — в редких случаях сопоставление '
-                    'может быть неточным. Цены собраны из открытых источников.',
+                    t.matchedProductsDisclaimer,
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: Theme.of(context).colorScheme.onSurfaceVariant,

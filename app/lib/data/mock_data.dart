@@ -6,7 +6,7 @@ class MockPromo {
   const MockPromo({
     required this.name,
     required this.store,
-    required this.attribution,
+    required this.storeSlug,
     required this.promoPrice,
     required this.regularPrice,
     required this.lowestPrice30d,
@@ -15,7 +15,10 @@ class MockPromo {
 
   final String name;
   final String store;
-  final String attribution;
+  /// Для attributionFormat в UI — 'barbora' показывает источник как Barbora
+  /// (реальный сайт-источник данных), а не название сети (Maxima), см.
+  /// StoreProductRow.attribution в data/models.dart.
+  final String storeSlug;
   final double promoPrice;
   final double regularPrice;
   final double lowestPrice30d;
@@ -26,7 +29,7 @@ const mockPromos = [
   MockPromo(
     name: 'Sviests 82.5% 200g',
     store: 'Rimi',
-    attribution: 'по данным Rimi',
+    storeSlug: 'rimi',
     promoPrice: 1.29,
     regularPrice: 2.99,
     lowestPrice30d: 1.29,
@@ -35,7 +38,7 @@ const mockPromos = [
   MockPromo(
     name: 'Laša fileja, kg',
     store: 'Rimi',
-    attribution: 'по данным Rimi',
+    storeSlug: 'rimi',
     promoPrice: 12.99,
     regularPrice: 22.99,
     lowestPrice30d: 12.99,
@@ -44,7 +47,7 @@ const mockPromos = [
   MockPromo(
     name: 'Siers Tilzītes 43% kg',
     store: 'Maxima',
-    attribution: 'по данным Barbora',
+    storeSlug: 'barbora',
     promoPrice: 5.99,
     regularPrice: 8.99,
     lowestPrice30d: 5.99,

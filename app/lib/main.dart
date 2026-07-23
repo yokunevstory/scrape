@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'app_settings/locale_controller.dart';
 import 'config/env.dart';
+import 'l10n/gen/app_localizations.dart';
 import 'screens/splash_screen.dart';
 import 'theme/app_theme.dart';
 
@@ -13,20 +16,54 @@ Future<void> main() async {
       publishableKey: Env.supabaseAnonKey,
     );
   }
-  runApp(const PriceCompareApp());
+  final localeController = LocaleController();
+  await localeController.load();
+  runApp(PriceCompareApp(localeController: localeController));
 }
 
-class PriceCompareApp extends StatelessWidget {
-  const PriceCompareApp({super.key});
+class PriceCompareApp extends StatefulWidget {
+  const PriceCompareApp({super.key, required this.localeController});
+
+  final LocaleController localeController;
+
+  @override
+  State<PriceCompareApp> createState() => _PriceCompareAppState();
+}
+
+class _PriceCompareAppState extends State<PriceCompareApp> {
+  @override
+  void initState() {
+    super.initState();
+    widget.localeController.addListener(_onLocaleChanged);
+  }
+
+  @override
+  void dispose() {
+    widget.localeController.removeListener(_onLocaleChanged);
+    super.dispose();
+  }
+
+  void _onLocaleChanged() => setState(() {});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'PriceCompare LV',
-      debugShowCheckedModeBanner: false,
-      theme: buildAppTheme(Brightness.light),
-      darkTheme: buildAppTheme(Brightness.dark),
-      home: const SplashScreen(),
+    return LocaleScope(
+      controller: widget.localeController,
+      child: MaterialApp(
+        onGenerateTitle: (context) => AppLocalizations.of(context)!.appTitle,
+        debugShowCheckedModeBanner: false,
+        theme: buildAppTheme(Brightness.light),
+        darkTheme: buildAppTheme(Brightness.dark),
+        locale: widget.localeController.locale,
+        supportedLocales: LocaleController.supportedLocales,
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        home: const SplashScreen(),
+      ),
     );
   }
 }

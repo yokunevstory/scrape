@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../data/models.dart';
 import '../data/watchlist_repository.dart';
+import '../l10n/gen/app_localizations.dart';
 import '../widgets/matched_product_card.dart';
 import '../widgets/product_card.dart';
 
@@ -15,8 +16,9 @@ class WatchlistScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final repo = WatchlistRepository();
+    final t = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(title: const Text('Отслеживаемые товары')),
+      appBar: AppBar(title: Text(t.watchlistTitle)),
       body: FutureBuilder<List<WatchlistEntry>>(
         future: repo.fetchWatchlist(),
         builder: (context, snapshot) {
@@ -27,19 +29,17 @@ class WatchlistScreen extends StatelessWidget {
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(24),
-                child: Text('Не удалось загрузить: ${snapshot.error}'),
+                child: Text(t.loadErrorGeneric('${snapshot.error}')),
               ),
             );
           }
           final entries = snapshot.data ?? [];
           if (entries.isEmpty) {
-            return const Center(
+            return Center(
               child: Padding(
-                padding: EdgeInsets.all(24),
+                padding: const EdgeInsets.all(24),
                 child: Text(
-                  'Пока нет отслеживаемых товаров. Нажмите на значок '
-                  'закладки на карточке товара, чтобы добавить его сюда — '
-                  'здесь будет видно, если на него появится акция или упадёт цена.',
+                  t.watchlistEmpty,
                   textAlign: TextAlign.center,
                 ),
               ),
