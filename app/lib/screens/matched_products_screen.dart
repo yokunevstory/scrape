@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../data/models.dart';
 import '../data/product_repository.dart';
 import '../l10n/gen/app_localizations.dart';
+import '../widgets/collapsible_category_section.dart';
 import '../widgets/matched_product_card.dart';
 
 /// Товары, гарантированно сопоставленные между Rimi и Maxima (Barbora) —
@@ -83,75 +84,18 @@ class _MatchedProductsScreenState extends State<MatchedProductsScreen> {
               }
               final category = categories[index];
               final items = byCategory[category]!;
-              return _CategorySection(
+              return CollapsibleCategorySection<MatchedProduct>(
                 title: category,
-                products: items,
+                items: items,
                 expanded: _expanded.contains(category),
                 onToggle: () => setState(() {
                   if (!_expanded.add(category)) _expanded.remove(category);
                 }),
+                itemBuilder: (context, product) => MatchedProductCard(product: product),
               );
             },
           );
         },
-      ),
-    );
-  }
-}
-
-class _CategorySection extends StatelessWidget {
-  const _CategorySection({
-    required this.title,
-    required this.products,
-    required this.expanded,
-    required this.onToggle,
-  });
-
-  final String title;
-  final List<MatchedProduct> products;
-  final bool expanded;
-  final VoidCallback onToggle;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          InkWell(
-            onTap: onToggle,
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      '$title (${products.length})',
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleMedium
-                          ?.copyWith(fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  Icon(expanded ? Icons.expand_less : Icons.expand_more),
-                ],
-              ),
-            ),
-          ),
-          if (expanded)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-              child: Column(
-                children: [
-                  for (final product in products) ...[
-                    MatchedProductCard(product: product),
-                    const SizedBox(height: 10),
-                  ],
-                ],
-              ),
-            ),
-        ],
       ),
     );
   }

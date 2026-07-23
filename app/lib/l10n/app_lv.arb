@@ -68,7 +68,8 @@
   "basketSourceDisclaimer": "Cenas apkopotas no publiski pieejamiem avotiem un var atšķirties no aktuālās cenas konkrētajā veikalā.",
 
   "promotionsTitle": "Akcijas",
-  "lowestPrice30d": "30 dienu zemākā cena: {price} €",
+  "promotionsEmpty": "Pašlaik nav akciju datu — iespējams, skrāperis vēl nav izgājis cauri sortimentam.",
+  "promotionsDisclaimer": "Rādītas aktuālās akciju cenas no visiem pievienotajiem veikaliem. Cenas apkopotas no publiski pieejamiem avotiem un var atšķirties no aktuālās cenas konkrētajā veikalā.",
 
   "profileTitle": "Profils",
   "guestLabel": "Viesis",

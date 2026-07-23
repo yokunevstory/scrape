@@ -35,6 +35,26 @@ class StoreProductRow {
   final String? imageUrl;
   final String sourceUrl;
 
+  /// Верхнеуровневая категория (первый сегмент пути) — сырой текст магазина,
+  /// без нормализации между Rimi/Barbora/LaTS (см. MatchedProduct.topCategory,
+  /// та же логика, тут дублируется — это разные классы с разным набором
+  /// полей, обобщать через миксин пока не оправдано ради одной строки).
+  String? get topCategory {
+    final path = categoryPath;
+    if (path == null || path.isEmpty) return null;
+    return path.split('/').first.trim();
+  }
+
+  /// Скидка в процентах от обычной цены — null, если акции нет или обычная
+  /// цена не указана. Используется, чтобы показывать самые выгодные акции
+  /// первыми (см. PromotionsScreen).
+  double? get discountPercent {
+    final reg = regularPrice;
+    if (reg == null || reg <= 0) return null;
+    final diff = reg - packagePrice;
+    return diff > 0 ? diff / reg * 100 : null;
+  }
+
   /// Атрибуция источника для отображения рядом с ценой — SPEC.md §8.0/§5.
   /// Для Barbora — именно название сайта-источника (Barbora), а не название
   /// сети (Maxima, см. storeDisplayName) — реальные данные берутся с

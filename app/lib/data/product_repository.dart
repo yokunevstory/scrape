@@ -51,6 +51,21 @@ class ProductRepository {
         .toList();
   }
 
+  /// Все текущие акционные товары (is_promo) из всех магазинов сразу —
+  /// см. PromotionsScreen, группировка по категориям на экране. Лимит —
+  /// потому что акций реально тысячи (проверено: 7000+), полный список
+  /// пользы не добавляет, а грузить и держать в памяти дольше.
+  Future<List<StoreProductRow>> fetchPromotions() async {
+    final rows = await _client
+        .from('store_products')
+        .select(_selectWithStore)
+        .eq('is_promo', true)
+        .limit(1500);
+    return (rows as List)
+        .map((r) => StoreProductRow.fromMap(r as Map<String, dynamic>))
+        .toList();
+  }
+
   static const _matchedProductsSelect = 'id, canonical_name, brand, '
       'store_products(id, product_id, raw_name, raw_category_path, package_price, '
       'regular_price, unit_price, unit_type, is_promo, image_url, '
