@@ -74,4 +74,28 @@ void main() {
     expect(find.text('Русский'), findsOneWidget);
     expect(find.text('Latviešu'), findsOneWidget);
   });
+
+  testWidgets('LocaleController falls back to Latvian for an unsupported device locale',
+      (WidgetTester tester) async {
+    SharedPreferences.setMockInitialValues({});
+    tester.platformDispatcher.localeTestValue = const Locale('de');
+    addTearDown(tester.platformDispatcher.clearLocaleTestValue);
+
+    final controller = LocaleController();
+    await controller.load();
+
+    expect(controller.locale, const Locale('lv'));
+  });
+
+  testWidgets('LocaleController picks up a supported device locale',
+      (WidgetTester tester) async {
+    SharedPreferences.setMockInitialValues({});
+    tester.platformDispatcher.localeTestValue = const Locale('en');
+    addTearDown(tester.platformDispatcher.clearLocaleTestValue);
+
+    final controller = LocaleController();
+    await controller.load();
+
+    expect(controller.locale, const Locale('en'));
+  });
 }
