@@ -101,6 +101,18 @@ def get_or_create_store(cfg: SupabaseConfig, slug: str, display_name: str) -> st
     return resp.json()[0]["id"]
 
 
+def _dedupe_by_sku(products: list[ScrapedProduct]) -> list[ScrapedProduct]:
+    """Если в одном батче два товара с одинаковым store_sku (например, карточка
+    попала на страницу дважды — спонсорский блок + органическая выдача), Postgres
+    падает на 'ON CONFLICT DO UPDATE command cannot affect row a second time',
+    а PostgREST отдаёт это как голый 500 без деталей (см. HANDOFF.md). Оставляем
+    последнее вхождение — оно ближе к концу пагинации, т.е. обычно самое свежее."""
+    deduped = {p.store_sku: p for p in products}
+    if len(deduped) != len(products):
+        print(f"  Убрано дублей store_sku в батче: {len(products) - len(deduped)}")
+    return list(deduped.values())
+
+
 def upsert_store_products(cfg: SupabaseConfig, store_id: str,
                            products: list[ScrapedProduct]) -> dict[str, str]:
     """Пишет/обновляет строки store_products (upsert по store_id+store_sku),
@@ -243,6 +255,7 @@ def write_products(cfg: SupabaseConfig, store_slug: str, store_display_name: str
     """Полный цикл записи для одной партии товаров одного магазина."""
     if not products:
         return
+    products = _dedupe_by_sku(products)
     store_id = get_or_create_store(cfg, store_slug, store_display_name)
     store_product_ids = upsert_store_products(cfg, store_id, products)
     insert_price_history(cfg, store_product_ids, products)
