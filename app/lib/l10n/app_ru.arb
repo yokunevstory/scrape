@@ -114,6 +114,22 @@
   "toggleToSignIn": "Уже есть аккаунт? Войти",
   "toggleToSignUp": "Нет аккаунта? Зарегистрироваться",
 
+  "forgotPasswordLink": "Забыли пароль?",
+  "forgotPasswordTitle": "Восстановление пароля",
+  "forgotPasswordHint": "Введите email, привязанный к аккаунту — пришлём на него ссылку для сброса пароля.",
+  "buttonSendResetLink": "Отправить ссылку",
+  "resetLinkSentInfo": "Если аккаунт с адресом {email} существует, на него отправлена ссылка для сброса пароля. Проверьте почту (и папку «Спам»).",
+  "@resetLinkSentInfo": {"placeholders": {"email": {"type": "String"}}},
+  "backToSignIn": "Назад ко входу",
+  "newPasswordTitle": "Новый пароль",
+  "newPasswordHint": "Задайте новый пароль для входа в аккаунт.",
+  "newPasswordLabel": "Новый пароль",
+  "confirmPasswordLabel": "Повторите пароль",
+  "passwordMismatchError": "Пароли не совпадают.",
+  "passwordTooShortError": "Пароль должен быть не короче 6 символов.",
+  "buttonSetNewPassword": "Сохранить новый пароль",
+  "passwordUpdatedInfo": "Пароль обновлён.",
+
   "notConfiguredMessage": "Supabase не настроен: запустите приложение с --dart-define=SUPABASE_URL=... и --dart-define=SUPABASE_ANON_KEY=... (см. scripts/build_web.bat).",
 
   "attributionFormat": "по данным {source}",

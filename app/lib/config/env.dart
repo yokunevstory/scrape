@@ -15,4 +15,12 @@ class Env {
 
   static bool get isConfigured =>
       supabaseUrl.isNotEmpty && supabaseAnonKey.isNotEmpty;
+
+  /// Deep link, на который Supabase Auth возвращает пользователя из письма
+  /// восстановления пароля (см. lib/auth/forgot_password_screen.dart).
+  /// Схема зарегистрирована в AndroidManifest.xml и ios/Runner/Info.plist;
+  /// URL нужно добавить в Supabase Dashboard → Authentication → URL
+  /// Configuration → Redirect URLs, иначе Supabase отклонит редирект
+  /// (см. SETUP.md §7 — это нужно сделать через дашборд, сам я не могу).
+  static const passwordResetRedirectUrl = 'lv.centik.app://reset-callback';
 }

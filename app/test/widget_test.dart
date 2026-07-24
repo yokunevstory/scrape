@@ -5,6 +5,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:app/app_settings/locale_controller.dart';
+import 'package:app/auth/forgot_password_screen.dart';
+import 'package:app/auth/sign_in_screen.dart';
 import 'package:app/l10n/gen/app_localizations.dart';
 import 'package:app/screens/home_shell.dart';
 import 'package:app/theme/app_theme.dart';
@@ -97,5 +99,30 @@ void main() {
     await controller.load();
 
     expect(controller.locale, const Locale('en'));
+  });
+
+  testWidgets('Sign in screen offers a forgot-password link that opens the reset screen',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(MaterialApp(
+      theme: buildAppTheme(Brightness.light),
+      locale: const Locale('ru'),
+      supportedLocales: AppLocalizations.supportedLocales,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      home: const SignInScreen(),
+    ));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Забыли пароль?'), findsOneWidget);
+
+    await tester.tap(find.text('Забыли пароль?'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(ForgotPasswordScreen), findsOneWidget);
+    expect(find.text('Восстановление пароля'), findsOneWidget);
   });
 }

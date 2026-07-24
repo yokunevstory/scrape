@@ -78,6 +78,12 @@ Solo, Netto, Beta, Sky, Aibe, IKI.
     `l10n.yaml`), `gen/` (сгенерированное, в .gitignore, пересоздаётся `flutter gen-l10n`
     автоматически при `flutter pub get`/build/`flutter analyze`).
   - `app_settings/locale_controller.dart` — текущий язык, персистится в SharedPreferences.
+  - `auth/` — `sign_in_screen.dart` (вход/регистрация + ссылка «Забыли пароль?»),
+    `forgot_password_screen.dart` (отправляет письмо через `resetPasswordForEmail`, redirect —
+    `Env.passwordResetRedirectUrl` = `lv.centik.app://reset-callback`), `reset_password_screen.dart`
+    (новый пароль, показывается из `auth_gate.dart` по событию `AuthChangeEvent.passwordRecovery`).
+    Deep link зарегистрирован в `AndroidManifest.xml` (intent-filter) и `Info.plist`
+    (`CFBundleURLTypes`) — но нужен ещё шаг в Supabase Dashboard, см. SETUP.md §7.
   - `ads/` — AdMob (баннеры на catalog и promotions, **сейчас тестовые ID Google**, см. ниже).
   - `widgets/` — переиспользуемые: `product_card.dart`, `matched_product_card.dart`,
     `collapsible_category_section.dart`, `watch_button.dart`, `add_to_list_button.dart`,
@@ -95,6 +101,9 @@ Solo, Netto, Beta, Sky, Aibe, IKI.
    права администратора репо). См. фикс таймаута выше.
 3. §6 — AdMob-аккаунт (admob.google.com) → прислать App ID и Ad unit ID, я подставлю вместо
    тестовых в `AndroidManifest.xml` и `lib/ads/ad_config.dart`.
+4. §7 (новое, 2026-07-24) — добавить `lv.centik.app://reset-callback` в Supabase Dashboard →
+   Authentication → URL Configuration → Redirect URLs (проект приложения, не архивный) — иначе
+   письмо восстановления пароля придёт, но ссылка из него не вернёт пользователя в приложение.
 
 ## Бэклог (SPEC.md §16)
 

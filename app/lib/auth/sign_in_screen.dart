@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../l10n/gen/app_localizations.dart';
 import 'consent.dart';
+import 'forgot_password_screen.dart';
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
@@ -170,6 +171,13 @@ class _SignInScreenState extends State<SignInScreen> {
                     }),
                     child: Text(_isSignUp ? t.toggleToSignIn : t.toggleToSignUp),
                   ),
+                  if (!_isSignUp)
+                    TextButton(
+                      onPressed: () => Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const ForgotPasswordScreen()),
+                      ),
+                      child: Text(t.forgotPasswordLink),
+                    ),
                 ],
               ),
             ),

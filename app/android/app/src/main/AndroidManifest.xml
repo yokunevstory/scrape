@@ -27,6 +27,16 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+            <!-- Deep link для возврата в приложение из письма о сбросе пароля
+                 (см. lib/auth/forgot_password_screen.dart, SETUP.md §7) —
+                 Supabase Auth редиректит на lv.centik.app://reset-callback
+                 после перехода по ссылке из письма. -->
+            <intent-filter android:autoVerify="false">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="lv.centik.app" android:host="reset-callback"/>
+            </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->

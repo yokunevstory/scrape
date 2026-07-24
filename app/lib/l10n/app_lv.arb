@@ -101,6 +101,21 @@
   "toggleToSignIn": "Jau ir konts? Ieiet",
   "toggleToSignUp": "Nav konta? Reģistrēties",
 
+  "forgotPasswordLink": "Aizmirsāt paroli?",
+  "forgotPasswordTitle": "Paroles atjaunošana",
+  "forgotPasswordHint": "Ievadiet kontam piesaistīto e-pastu — nosūtīsim uz to saiti paroles maiņai.",
+  "buttonSendResetLink": "Nosūtīt saiti",
+  "resetLinkSentInfo": "Ja konts ar adresi {email} pastāv, uz to nosūtīta saite paroles maiņai. Pārbaudiet e-pastu (arī mapi «Surogātpasts»).",
+  "backToSignIn": "Atpakaļ uz ieiešanu",
+  "newPasswordTitle": "Jauna parole",
+  "newPasswordHint": "Iestatiet jaunu paroli konta pieslēgšanai.",
+  "newPasswordLabel": "Jauna parole",
+  "confirmPasswordLabel": "Atkārtojiet paroli",
+  "passwordMismatchError": "Paroles nesakrīt.",
+  "passwordTooShortError": "Parolei jābūt vismaz 6 rakstzīmes garai.",
+  "buttonSetNewPassword": "Saglabāt jauno paroli",
+  "passwordUpdatedInfo": "Parole atjaunota.",
+
   "notConfiguredMessage": "Supabase nav konfigurēts: palaidiet lietotni ar --dart-define=SUPABASE_URL=... un --dart-define=SUPABASE_ANON_KEY=... (skat. scripts/build_web.bat).",
 
   "attributionFormat": "pēc {source} datiem",

@@ -101,6 +101,21 @@
   "toggleToSignIn": "Already have an account? Sign in",
   "toggleToSignUp": "No account? Sign up",
 
+  "forgotPasswordLink": "Forgot password?",
+  "forgotPasswordTitle": "Password recovery",
+  "forgotPasswordHint": "Enter the email linked to your account — we'll send a password reset link to it.",
+  "buttonSendResetLink": "Send reset link",
+  "resetLinkSentInfo": "If an account with {email} exists, a password reset link has been sent to it. Check your inbox (and spam folder).",
+  "backToSignIn": "Back to sign in",
+  "newPasswordTitle": "New password",
+  "newPasswordHint": "Set a new password for signing in to your account.",
+  "newPasswordLabel": "New password",
+  "confirmPasswordLabel": "Confirm password",
+  "passwordMismatchError": "Passwords don't match.",
+  "passwordTooShortError": "Password must be at least 6 characters long.",
+  "buttonSetNewPassword": "Save new password",
+  "passwordUpdatedInfo": "Password updated.",
+
   "notConfiguredMessage": "Supabase is not configured: run the app with --dart-define=SUPABASE_URL=... and --dart-define=SUPABASE_ANON_KEY=... (see scripts/build_web.bat).",
 
   "attributionFormat": "according to {source}",
