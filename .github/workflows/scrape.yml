@@ -1,9 +1,17 @@
 name: Scrape prices
 
-# Регулярный скрапинг Rimi + Barbora и запись в Supabase — чтобы цены в
+# Регулярный скрапинг Rimi + Barbora + LaTS и запись в Supabase — чтобы цены в
 # приложении обновлялись сами по себе, без ручного запуска скрапера и без
 # новой сборки/установки APK (приложение и так читает Supabase по сети).
 # См. SPEC.md §16 и SETUP.md §5.
+#
+# Магазины скрапятся в отдельных параллельных джобах (matrix) — раньше все три
+# шли последовательно в одной джобе с общим timeout-minutes: 180, и как только
+# суммарное время выросло (добавился LaTS, Rimi/Barbora сами стали дольше),
+# джоба стабильно обрывалась на середине на несколько дней подряд, и до LaTS
+# и матчинга очередь просто не доходила. Параллельные джобы решают это: одна
+# медленная/зависшая раскладка не блокирует остальные, и общий таймаут теперь
+# считается per-store, а не на всё сразу.
 
 on:
   schedule:
@@ -13,7 +21,11 @@ on:
 jobs:
   scrape:
     runs-on: ubuntu-latest
-    timeout-minutes: 180
+    timeout-minutes: 240
+    strategy:
+      fail-fast: false
+      matrix:
+        store: [rimi, barbora, lats]
     steps:
       - uses: actions/checkout@v4
 
@@ -33,17 +45,36 @@ jobs:
           SUPABASE_ARCHIVE_SERVICE_KEY=${{ secrets.SUPABASE_ARCHIVE_SERVICE_KEY }}
           EOF
 
-      - name: Скрапинг Rimi (все рубрики)
+      - name: Скрапинг ${{ matrix.store }} (все рубрики)
         working-directory: scraper
-        run: python run_to_supabase.py --store rimi --all-categories
+        run: python run_to_supabase.py --store ${{ matrix.store }} --all-categories
 
-      - name: Скрапинг Barbora (все рубрики)
-        working-directory: scraper
-        run: python run_to_supabase.py --store barbora --all-categories
+  match:
+    needs: scrape
+    # Матчинг должен пройти по тому, что успело сматчиться, даже если один из
+    # магазинов в этот раз упал или не уложился в таймаут — иначе одна плохая
+    # раскладка по-прежнему блокирует матчинг на несколько дней, как и раньше.
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
 
-      - name: Скрапинг LaTS (все рубрики)
-        working-directory: scraper
-        run: python run_to_supabase.py --store lats --all-categories
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Установить зависимости
+        run: pip install -r scraper/requirements.txt
+
+      - name: Записать ключи Supabase (из GitHub Secrets, не в git)
+        run: |
+          cat > scraper/.env <<EOF
+          SUPABASE_APP_URL=${{ secrets.SUPABASE_APP_URL }}
+          SUPABASE_APP_SERVICE_KEY=${{ secrets.SUPABASE_APP_SERVICE_KEY }}
+          SUPABASE_ARCHIVE_URL=${{ secrets.SUPABASE_ARCHIVE_URL }}
+          SUPABASE_ARCHIVE_SERVICE_KEY=${{ secrets.SUPABASE_ARCHIVE_SERVICE_KEY }}
+          EOF
 
       - name: Сопоставление товаров между магазинами
         working-directory: scraper
