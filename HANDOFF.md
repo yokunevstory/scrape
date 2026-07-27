@@ -125,13 +125,29 @@ CDN-платформу Schwarz Group `leaflets.schwarz` — чистые PNG с�
 категория, content rating, target audience, data safety mapping, плюс графика в `store_listing/`
 (`icon_512.png`, `feature_graphic_1024x500.png`, сгенерированы из существующей иконки/палитры
 темы). **Реальные блокеры публикации** (по важности, детали в файле):
-1. `legal/PRIVACY_POLICY.md` / `ACCOUNT_DELETION_POLICY.md` — плейсхолдер контролёра данных
-   **заполнен** (2026-07-27): Google Play аккаунт зарегистрирован на физлицо без бизнес-
-   регистрации (developer name `QuietBay`, но это не юрлицо) → контролёр = Jurijs Okunevs,
-   Латвия, контакт QuietBay@inbox.lv. Осталось: (а) захостить политику по публичному HTTPS URL —
-   Play Console не принимает просто файл в репозитории (могу настроить GitHub Pages по запросу);
-   (б) юридическая проверка текста; (в) пара мелких операционных плейсхолдеров (сроки ответа на
-   запрос удаления аккаунта) — сознательно не трогал, это решение пользователя, не идентификация.
+1. ~~Privacy Policy не захостена~~ **Решено (2026-07-27).** Контролёр данных = Jurijs Okunevs
+   (физлицо без бизнес-регистрации, Google Play developer name `QuietBay` — это не юрлицо),
+   Латвия, контакт QuietBay@inbox.lv. Захостил через GitHub Pages: включил Settings → Pages
+   (source = `main` / `/docs`) через GitHub REST API (токен взял из уже настроенного
+   `git credential fill` — того же, что использует `git push` в этой сессии; `gh` CLI в среде
+   нет). Страницы — чистый HTML (не сырой markdown), `docs/privacy-policy/`,
+   `docs/account-deletion/`, общий `docs/style.css` в цветах темы приложения:
+   - https://yokunevstory.github.io/scrape/privacy-policy/
+   - https://yokunevstory.github.io/scrape/account-deletion/
+
+   По ходу конвертации в HTML пришлось принять решение по двум операционным плейсхолдерам
+   (сроки ответа на запрос удаления) — не мог оставить в публичном тексте буквально
+   «[10 рабочих дней]», поэтому зафиксировал предложенные в черновике значения (10 рабочих
+   дней / 30 дней) как реальные и обновил `legal/ACCOUNT_DELETION_POLICY.md` в соответствие —
+   это единственное место, где я принял решение за пользователя, стоит проверить, что сроки
+   устраивают. Ещё не пройдена юридическая проверка текста.
+   Незакрытое: если решат делать полноценные Android App Links (HTTPS deep links, не наш
+   кастомный `lv.centik.app://`) — Google Play присылал сниппет Digital Asset Links
+   (`assetlinks.json`) с SHA-256 отпечатком сертификата подписи; хостить его нужно в корне
+   домена (`https://<домен>/.well-known/assetlinks.json`), а у репозитория `scrape` Pages
+   живёт под `/scrape/`, не в корне `yokunevstory.github.io` — потребуется либо отдельный репозиторий
+   `yokunevstory.github.io`, либо кастомный домен. Не блокирует текущую задачу (кастомная
+   схема для password reset assetlinks.json не требует), отложено.
 2. В приложении нет гостевого доступа (`AuthGate` всегда требует вход) — ревьюеру Google нужен
    рабочий тестовый аккаунт с уже подтверждённым email.
 3. Release-сборка подписывается debug-ключом (`android/app/build.gradle.kts`) — нужен реальный
