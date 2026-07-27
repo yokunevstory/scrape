@@ -135,6 +135,29 @@ deep link `lv.centik.app://reset-callback` (схема уже зарегистр
 ## 8. Google Play Console — публикация приложения
 
 Все тексты (описания на 3 языках, категория, content rating, data safety), готовая графика
-(иконка 512×512, feature graphic) и список реальных блокеров публикации (незаполненная Privacy
-Policy, отсутствие гостевого доступа для ревьюера, debug-подпись release-сборки, недостающие
-скриншоты) — в отдельном файле [`PLAY_STORE_LISTING.md`](PLAY_STORE_LISTING.md).
+(иконка 512×512, feature graphic) и список реальных блокеров публикации — в отдельном файле
+[`PLAY_STORE_LISTING.md`](PLAY_STORE_LISTING.md).
+
+## 9. Release-ключ подписи Android (upload key)
+
+Сгенерирован 2026-07-27: `android/upload-keystore.jks`, алиас `centik-upload` (в `.gitignore`,
+никогда не попадает в git — как и `android/key.properties` с паролями рядом с ним).
+`android/app/build.gradle.kts` теперь подписывает release-сборки этим ключом, если файл
+`key.properties` существует локально (иначе падает обратно на debug-ключ — чтобы `flutter run
+--release` работал у любого, у кого нет доступа к реальному ключу).
+
+**Обязательно сохраните резервную копию** — если файл ключа или пароль от него будут утеряны,
+публиковать обновления приложения станет невозможно без обращения в поддержку Google Play
+(процесс сброса upload-key существует, но занимает время и требует подтверждения владения
+аккаунтом). Что сохранить в надёжном месте (менеджер паролей + отдельная копия файла, например
+в облаке):
+- сам файл `app/android/upload-keystore.jks`;
+- пароль (один и тот же для store и key) — сообщён в чате при создании, здесь намеренно не
+  дублируется.
+
+Собрать release App Bundle для загрузки в Play Console:
+```
+flutter build appbundle --release --dart-define-from-file=env/dev.json
+```
+Результат — `app/build/app/outputs/bundle/release/app-release.aab`, это и есть файл, который
+нужно перетащить в форму «Наборы App Bundle» при создании выпуска.

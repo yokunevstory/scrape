@@ -150,8 +150,15 @@ CDN-платформу Schwarz Group `leaflets.schwarz` — чистые PNG с�
    схема для password reset assetlinks.json не требует), отложено.
 2. В приложении нет гостевого доступа (`AuthGate` всегда требует вход) — ревьюеру Google нужен
    рабочий тестовый аккаунт с уже подтверждённым email.
-3. Release-сборка подписывается debug-ключом (`android/app/build.gradle.kts`) — нужен реальный
-   upload-key перед сборкой AAB для загрузки.
+3. ~~Debug-подпись release-сборки~~ **Решено (2026-07-27).** Сгенерировал реальный upload-key
+   (`android/upload-keystore.jks` + `android/key.properties`, оба в `.gitignore`, CN=Jurijs
+   Okunevs/OU=Centik/L=Riga/C=LV, alias `centik-upload`, валиден до 2053). Обновил
+   `android/app/build.gradle.kts`: если `key.properties` есть локально — release подписывается
+   им, иначе падает на debug (чтобы `flutter run --release` работал без ключа у любого
+   разработчика). Собрал и проверил `keytool -printcert` на итоговом `.aab` — подпись настоящая.
+   Пароль от ключа сообщён пользователю в чате (не в git, не в этом файле) — **важно, чтобы он
+   был сохранён у пользователя в менеджере паролей**, я эту копию не храню нигде постоянно.
+   Файл для загрузки: `app/build/app/outputs/bundle/release/app-release.aab`. См. SETUP.md §9.
 4. Скриншоты телефона (мин. 2) — не смог сгенерировать без запуска на эмуляторе/устройстве с
    реальными данными, нужно снять вместе в следующей сессии или самостоятельно.
 
