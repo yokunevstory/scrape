@@ -4,6 +4,7 @@ import '../data/models.dart';
 import '../l10n/gen/app_localizations.dart';
 import '../theme/app_theme.dart';
 import 'add_to_list_button.dart';
+import 'price_trend_icon.dart';
 
 /// Карточка одного и того же товара с предложениями из разных магазинов
 /// рядом друг с другом — сопоставление из scraper/match_products.py
@@ -126,6 +127,10 @@ class _OfferRow extends StatelessWidget {
                 color: isCheapest ? colors.savings : Theme.of(context).colorScheme.onSurface,
               ),
         ),
+        if (offer.priceTrend != PriceTrend.none) ...[
+          const SizedBox(width: 2),
+          PriceTrendIcon(trend: offer.priceTrend),
+        ],
       ],
     );
   }

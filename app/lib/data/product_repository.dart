@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'models.dart';
+import 'price_trend.dart';
 
 /// Обращения к каталогу товаров (store_products) — публичные данные,
 /// читаются без ограничений RLS (см. supabase/migrations/0001_init_schema.sql,
@@ -31,9 +32,9 @@ class ProductRepository {
       }
     }
     final rows = await query.order('unit_price', ascending: true).limit(200);
-    return (rows as List)
+    return withPriceTrend((rows as List)
         .map((r) => StoreProductRow.fromMap(r as Map<String, dynamic>))
-        .toList();
+        .toList());
   }
 
   /// Поиск устойчив к опечаткам (напр. "bezpiens" находит "biezpiens") —
@@ -46,9 +47,9 @@ class ProductRepository {
       'search_query': trimmed,
       'result_limit': 200,
     });
-    return (rows as List)
+    return withPriceTrend((rows as List)
         .map((r) => StoreProductRow.fromRpcMap(r as Map<String, dynamic>))
-        .toList();
+        .toList());
   }
 
   /// Все текущие акционные товары (is_promo) из всех магазинов сразу —
@@ -61,9 +62,9 @@ class ProductRepository {
         .select(_selectWithStore)
         .eq('is_promo', true)
         .limit(1500);
-    return (rows as List)
+    return withPriceTrend((rows as List)
         .map((r) => StoreProductRow.fromMap(r as Map<String, dynamic>))
-        .toList();
+        .toList());
   }
 
   static const _matchedProductsSelect = 'id, canonical_name, brand, '
@@ -87,6 +88,18 @@ class ProductRepository {
         .where((p) => p.offers.length >= 2 && p.savings != null)
         .toList();
     products.sort((a, b) => a.canonicalName.compareTo(b.canonicalName));
-    return products;
+
+    // Один запрос на все предложения сразу, а не по одному на каждый матч.
+    final allOffers = products.expand((p) => p.offers).toList();
+    final trended = await withPriceTrend(allOffers);
+    final trendById = {for (final o in trended) o.id: o};
+    return products
+        .map((p) => MatchedProduct(
+              id: p.id,
+              canonicalName: p.canonicalName,
+              brand: p.brand,
+              offers: p.offers.map((o) => trendById[o.id] ?? o).toList(),
+            ))
+        .toList();
   }
 }

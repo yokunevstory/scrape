@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'models.dart';
+import 'price_trend.dart';
 
 /// Список отслеживаемых товаров — "слежу за ценой", чтобы увидеть акцию или
 /// падение цены на избранный товар при следующем открытии приложения (без
@@ -104,6 +105,16 @@ class WatchlistRepository {
         }
       }
     }
-    return entries;
+
+    // Один запрос на все предложения сразу, а не по одному на запись.
+    final allOffers = entries.expand((e) => e.offers).toList();
+    final trended = await withPriceTrend(allOffers);
+    final trendById = {for (final o in trended) o.id: o};
+    return entries
+        .map((e) => WatchlistEntry(
+              offers: e.offers.map((o) => trendById[o.id] ?? o).toList(),
+              watchedAtPrice: e.watchedAtPrice,
+            ))
+        .toList();
   }
 }

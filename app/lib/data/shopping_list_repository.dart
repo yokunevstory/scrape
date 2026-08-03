@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'models.dart';
+import 'price_trend.dart';
 
 /// Список покупок пользователя — на MVP один список на пользователя
 /// ("Мой список"), создаётся автоматически при первом обращении. Позиции —
@@ -115,6 +116,19 @@ class ShoppingListRepository {
         }
       }
     }
-    return entries;
+
+    // Один запрос на все предложения сразу, а не по одному на позицию списка.
+    final allOffers = entries.expand((e) => e.$2.offers).toList();
+    final trended = await withPriceTrend(allOffers);
+    final trendById = {for (final o in trended) o.id: o};
+    return entries
+        .map((e) => (
+              e.$1,
+              WatchlistEntry(
+                offers: e.$2.offers.map((o) => trendById[o.id] ?? o).toList(),
+                watchedAtPrice: e.$2.watchedAtPrice,
+              ),
+            ))
+        .toList();
   }
 }

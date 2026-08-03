@@ -4,6 +4,7 @@ import '../data/models.dart';
 import '../l10n/gen/app_localizations.dart';
 import '../theme/app_theme.dart';
 import 'add_to_list_button.dart';
+import 'price_trend_icon.dart';
 import 'watch_button.dart';
 
 class ProductCard extends StatelessWidget {
@@ -126,14 +127,23 @@ class ProductCard extends StatelessWidget {
                       fontSize: 12,
                     ),
                   ),
-                Text(
-                  '${product.packagePrice.toStringAsFixed(2)} €',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: isCheapest
-                            ? colors.savings
-                            : Theme.of(context).colorScheme.onSurface,
-                      ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '${product.packagePrice.toStringAsFixed(2)} €',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: isCheapest
+                                ? colors.savings
+                                : Theme.of(context).colorScheme.onSurface,
+                          ),
+                    ),
+                    if (product.priceTrend != PriceTrend.none) ...[
+                      const SizedBox(width: 2),
+                      PriceTrendIcon(trend: product.priceTrend),
+                    ],
+                  ],
                 ),
                 if (product.unitPrice != null)
                   Text(

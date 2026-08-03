@@ -1,5 +1,8 @@
 import '../l10n/gen/app_localizations.dart';
 
+/// Направление изменения цены за последнюю неделю — см. StoreProductRow.priceTrend.
+enum PriceTrend { none, up, down }
+
 class StoreProductRow {
   const StoreProductRow({
     required this.id,
@@ -15,6 +18,7 @@ class StoreProductRow {
     required this.isPromo,
     required this.imageUrl,
     required this.sourceUrl,
+    this.priceWeekAgo,
   });
 
   final String id;
@@ -34,6 +38,38 @@ class StoreProductRow {
   final bool isPromo;
   final String? imageUrl;
   final String sourceUrl;
+  /// Цена не позже 6 дней назад (см. supabase/migrations/0011_price_trend.sql)
+  /// — null, пока не догружена через withPriceTrend() из price_trend.dart,
+  /// либо если для товара ещё нет истории цены такого возраста.
+  final double? priceWeekAgo;
+
+  /// Изменилась ли цена по сравнению с неделей назад — для маленькой стрелки
+  /// на карточке товара. `none`, если priceWeekAgo не догружен или цена не
+  /// изменилась.
+  PriceTrend get priceTrend {
+    final was = priceWeekAgo;
+    if (was == null) return PriceTrend.none;
+    if (packagePrice < was) return PriceTrend.down;
+    if (packagePrice > was) return PriceTrend.up;
+    return PriceTrend.none;
+  }
+
+  StoreProductRow copyWithPriceWeekAgo(double? priceWeekAgo) => StoreProductRow(
+        id: id,
+        productId: productId,
+        storeDisplayName: storeDisplayName,
+        storeSlug: storeSlug,
+        rawName: rawName,
+        categoryPath: categoryPath,
+        packagePrice: packagePrice,
+        regularPrice: regularPrice,
+        unitPrice: unitPrice,
+        unitType: unitType,
+        isPromo: isPromo,
+        imageUrl: imageUrl,
+        sourceUrl: sourceUrl,
+        priceWeekAgo: priceWeekAgo,
+      );
 
   /// Верхнеуровневая категория (первый сегмент пути) — сырой текст магазина,
   /// без нормализации между Rimi/Barbora/LaTS (см. MatchedProduct.topCategory,
