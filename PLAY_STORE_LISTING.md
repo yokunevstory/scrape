@@ -50,9 +50,9 @@
 
 **App name (≤30 симв., 26 факт.):** `Centik: cenu salīdzinājums`
 
-**Short description (≤80 симв., 61 факт.):**
+**Short description (≤80 симв., 72 факт.):**
 ```
-Salīdzini cenas Rimi, Maxima, LaTS — uzzini, kur pirkt lētāk.
+Salīdzini cenas populārākajos pārtikas veikalos — ietaupi katrā pirkumā.
 ```
 
 **Full description (≤4000 симв., ~976 факт.):**
@@ -78,9 +78,9 @@ Cenas tiek apkopotas no publiski pieejamām veikalu tīmekļa vietnēm un var at
 
 **App name (26 симв.):** `Centik: сравнение цен`
 
-**Short description (63 симв.):**
+**Short description (74 симв.):**
 ```
-Сравнивай цены Rimi, Maxima и LaTS — экономь на каждой покупке.
+Сравнивай цены в самых популярных продуктовых — экономь на каждой покупке.
 ```
 
 **Full description (~1022 симв.):**
@@ -106,9 +106,9 @@ Centik помогает экономить на повседневных пок�
 
 **App name (24 chars):** `Centik: Price Comparison`
 
-**Short description (61 chars):**
+**Short description (75 chars):**
 ```
-Compare prices at Rimi, Maxima and LaTS — save on every shop.
+Compare prices at the most popular grocery stores — save on every purchase.
 ```
 
 **Full description (~956 chars):**
